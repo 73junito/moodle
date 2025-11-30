@@ -1,4 +1,5 @@
 <?php
+
 // File: tests/generatelabs_test.php
 
 defined('MOODLE_INTERNAL') || die();
@@ -8,7 +9,6 @@ require_once $CFG->dirroot . '/local/autocurriculum/lib.php';
 
 class local_autocurriculum_generatelabs_testcase extends advanced_testcase
 {
-
     public function test_generate_labs()
     {
         $this->resetAfterTest();

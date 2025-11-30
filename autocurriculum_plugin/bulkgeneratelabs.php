@@ -1,4 +1,5 @@
 <?php
+
 // File: bulkgeneratelabs.php
 
 require __DIR__ . '/../../config.php';
@@ -41,7 +42,7 @@ $form = new bulkgeneratelabs_form();
 
 if ($form->is_cancelled()) {
     redirect(new moodle_url('/my'));
-} else if ($data = $form->get_data()) {
+} elseif ($data = $form->get_data()) {
     $selectedcourses = $data->courses;
     $customprompt = $data->customprompt;
 

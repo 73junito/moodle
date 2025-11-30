@@ -1,4 +1,5 @@
 <?php
+
 // File: db/caches.php
 
 defined('MOODLE_INTERNAL') || die();

@@ -1,4 +1,5 @@
 <?php
+
 // File: db/access.php
 
 defined('MOODLE_INTERNAL') || die();

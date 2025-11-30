@@ -1,4 +1,5 @@
 <?php
+
 // File: lang/en/local_autocurriculum.php
 
 $string['pluginname'] = 'AutoCurriculum';

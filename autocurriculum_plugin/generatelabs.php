@@ -1,4 +1,5 @@
 <?php
+
 // File: generatelabs.php
 
 require __DIR__ . '/../../config.php';
@@ -46,7 +47,7 @@ $form = new generatelabs_form(null, array('courseid' => $courseid));
 
 if ($form->is_cancelled()) {
     redirect(new moodle_url('/course/view.php', array('id' => $courseid)));
-} else if ($data = $form->get_data()) {
+} elseif ($data = $form->get_data()) {
     // Process form submission.
     $sections = $data->sections;
     $customprompt = $data->customprompt;

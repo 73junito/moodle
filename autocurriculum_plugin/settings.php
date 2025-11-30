@@ -1,4 +1,5 @@
 <?php
+
 // File: settings.php
 
 defined('MOODLE_INTERNAL') || die();

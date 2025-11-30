@@ -1,9 +1,10 @@
 <?php
+
 // db/upgrade.php - Upgrade script for the AutoCurriculum local plugin.
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once $CFG->libdir.'/db/upgradelib.php'; // Include upgradelib for upgrade functions.
+require_once $CFG->libdir . '/db/upgradelib.php'; // Include upgradelib for upgrade functions.
 
 /**
  * Upgrade code for the local_autocurriculum plugin.

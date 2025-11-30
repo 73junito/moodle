@@ -1,4 +1,5 @@
 <?php
+
 // db/install.php - Installation hooks for the AutoCurriculum local plugin.
 
 defined('MOODLE_INTERNAL') || die();

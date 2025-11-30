@@ -1,4 +1,5 @@
 <?php
+
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version   = 2023112700;        // The current plugin version (YYYYMMDDXX).

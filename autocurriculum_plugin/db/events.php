@@ -1,4 +1,5 @@
 <?php
+
 // File: db/events.php
 
 defined('MOODLE_INTERNAL') || die();

@@ -1,4 +1,5 @@
 <?php
+
 // File: scan.php
 
 require __DIR__ . '/../../config.php';
@@ -40,10 +41,12 @@ if (empty($results)) {
 
     foreach ($results as $courseid => $result) {
         $missing_str = implode(
-            ', ', array_map(
+            ', ',
+            array_map(
                 function ($item) {
                     return get_string('missing_' . str_replace(' ', '_', $item), 'local_autocurriculum');
-                }, $result['missing']
+                },
+                $result['missing']
             )
         );
         $table->data[] = array(
