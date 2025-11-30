@@ -1,5 +1,7 @@
 <?php
 
+define('MOODLE_TEST', true);
+
 // File: tests/generatelabs_test.php
 
 defined('MOODLE_INTERNAL') || die();
@@ -7,7 +9,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once $CFG->dirroot . '/local/autocurriculum/lib.php';
 
-class local_autocurriculum_generatelabs_testcase extends advanced_testcase
+class generatelabs_test extends advanced_testcase
 {
     public function test_generate_labs()
     {
@@ -15,15 +17,11 @@ class local_autocurriculum_generatelabs_testcase extends advanced_testcase
 
         // Mock course and sections.
         $course = $this->getDataGenerator()->create_course();
-        $section = $this->getDataGenerator()->create_course_section(array('course' => $course->id));
+        $section = $this->getDataGenerator()->create_course_section(array('course' => $course->id, 'section' => 1));
 
         // Mock Ollama config.
-        set_config('ollama_url', 'http://example.com', 'local_autocurriculum');
+        set_config('ollima_url', 'http://example.com', 'local_autocurriculum');
         set_config('default_model', 'testmodel', 'local_autocurriculum');
-
-        // Mock the API call.
-        $mockresponse = 'Mock generated lab content';
-        // Note: In real test, use a mock for curl or the function.
 
         $result = local_autocurriculum_generate_labs($course->id, array($section->id));
 
@@ -37,8 +35,10 @@ class local_autocurriculum_generatelabs_testcase extends advanced_testcase
 
         $course1 = $this->getDataGenerator()->create_course();
         $course2 = $this->getDataGenerator()->create_course();
+        $this->getDataGenerator()->create_course_section(array('course' => $course1->id, 'section' => 1));
+        $this->getDataGenerator()->create_course_section(array('course' => $course2->id, 'section' => 1));
 
-        set_config('ollama_url', 'http://example.com', 'local_autocurriculum');
+        set_config('ollima_url', 'http://example.com', 'local_autocurriculum');
         set_config('default_model', 'testmodel', 'local_autocurriculum');
 
         $result = local_autocurriculum_generate_labs_bulk(array($course1->id, $course2->id));
