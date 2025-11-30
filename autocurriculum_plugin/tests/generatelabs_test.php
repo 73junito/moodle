@@ -4,14 +4,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-namespace local_autocurriculum;
-
 global $CFG;
 require_once $CFG->dirroot . '/local/autocurriculum/lib.php';
 
-class LocalAutocurriculumGeneratelabsTestcase extends advanced_testcase
+class local_autocurriculum_generatelabs_testcase extends advanced_testcase
 {
-    public function testGenerateLabs()
+    public function test_generate_labs()
     {
         $this->resetAfterTest();
 
@@ -33,7 +31,7 @@ class LocalAutocurriculumGeneratelabsTestcase extends advanced_testcase
         $this->assertGreaterThan(0, $result['success']);
     }
 
-    public function testBulkGenerateLabs()
+    public function test_bulk_generate_labs()
     {
         $this->resetAfterTest();
 
