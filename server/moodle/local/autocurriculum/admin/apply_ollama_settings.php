@@ -2,7 +2,7 @@
 // Admin tool: backup and apply Ollama provider "Generate text" action settings.
 // Location: moodle/local/autocurriculum/admin/apply_ollama_settings.php
 
-require_once(__DIR__ . '/../../../config.php');
+require_once __DIR__ . '/../../../config.php';
 require_login();
 if (!is_siteadmin()) {
     throw new \moodle_exception('adminonly', 'local_autocurriculum');

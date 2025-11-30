@@ -6,8 +6,11 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Handles license validation and normalization for imported OER.
  */
-class license {
-    /** @var array Allowed licenses. */
+class license
+{
+    /**
+     * @var array Allowed licenses. 
+     */
     protected $allowed = [
         'CC-BY',
         'CC-BY-SA',
@@ -18,10 +21,11 @@ class license {
     /**
      * Normalize a raw license string.
      *
-     * @param string $raw
+     * @param  string $raw
      * @return string|null
      */
-    public function normalize(string $raw): ?string {
+    public function normalize(string $raw): ?string
+    {
         $raw = trim(strtoupper($raw));
         foreach ($this->allowed as $allowed) {
             if (strpos($raw, $allowed) !== false) {
@@ -41,10 +45,11 @@ class license {
     /**
      * Check if a license is permitted for import.
      *
-     * @param string $license
+     * @param  string $license
      * @return bool
      */
-    public function is_allowed(string $license): bool {
+    public function is_allowed(string $license): bool
+    {
         return in_array($this->normalize($license), $this->allowed, true);
     }
 }

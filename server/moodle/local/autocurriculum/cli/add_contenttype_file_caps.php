@@ -3,7 +3,7 @@
 // Usage: php add_contenttype_file_caps.php
 
 define('CLI_SCRIPT', true);
-require_once(__DIR__ . '/../../../config.php');
+require_once __DIR__ . '/../../../config.php';
 global $DB;
 
 if (PHP_SAPI !== 'cli') {

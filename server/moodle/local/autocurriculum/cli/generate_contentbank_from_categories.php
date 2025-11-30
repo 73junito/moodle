@@ -3,8 +3,8 @@
 // Usage: php generate_contentbank_from_categories.php [--dry-run] [--call-ollama]
 
 define('CLI_SCRIPT', true);
-require(__DIR__ . '/../../../config.php');
-require_once($CFG->dirroot . '/lib/clilib.php');
+require __DIR__ . '/../../../config.php';
+require_once $CFG->dirroot . '/lib/clilib.php';
 global $DB, $CFG;
 
 list($options, $unrecognized) = cli_get_params(

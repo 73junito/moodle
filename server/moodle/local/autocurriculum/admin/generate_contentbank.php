@@ -1,6 +1,6 @@
 <?php
 // Admin page: generate content files for top-level categories and courses using Ollama.
-require_once(__DIR__ . '/../../../config.php');
+require_once __DIR__ . '/../../../config.php';
 require_login();
 if (!is_siteadmin()) {
     throw new \moodle_exception('adminonly', 'local_autocurriculum');
@@ -90,17 +90,20 @@ function call_ollama_sync($endpoint, $model, $prompt, $system = '')
     $lines = preg_split('/\r?\n/', $resp);
     foreach ($lines as $line) {
         $line = trim($line);
-        if ($line === '') continue;
+        if ($line === '') { continue;
+        }
         $decoded = json_decode($line, true);
-        if (!is_array($decoded)) continue;
+        if (!is_array($decoded)) { continue;
+        }
         if (isset($decoded['response']) && is_string($decoded['response']) && $decoded['response'] !== '') {
             $out .= $decoded['response'];
         } elseif (isset($decoded['text']) && is_string($decoded['text'])) {
             $out .= $decoded['text'];
         } elseif (isset($decoded['results']) && is_array($decoded['results'])) {
             foreach ($decoded['results'] as $r) {
-                if (is_string($r)) $out .= $r;
-                elseif (is_array($r) && isset($r['text'])) $out .= $r['text'];
+                if (is_string($r)) { $out .= $r;
+                } elseif (is_array($r) && isset($r['text'])) { $out .= $r['text'];
+                }
             }
         }
     }

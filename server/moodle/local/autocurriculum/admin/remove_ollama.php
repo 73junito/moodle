@@ -3,7 +3,7 @@
 // Usage: visit this page as site admin. First view lists matching rows.
 // To delete them, follow the confirmation link (adds ?confirm=1).
 
-require_once(__DIR__ . '/../../../config.php');
+require_once __DIR__ . '/../../../config.php';
 require_login();
 if (!is_siteadmin()) {
     http_response_code(403);

@@ -4,7 +4,7 @@
 //        php remove_ollama_providers.php --confirm
 
 define('CLI_SCRIPT', true);
-require(__DIR__ . '/../../../config.php');
+require __DIR__ . '/../../../config.php';
 global $DB;
 // CLI params.
 $options = getopt('', ['dry-run', 'confirm']);

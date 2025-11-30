@@ -10,12 +10,13 @@ defined('MOODLE_INTERNAL') || die();
  * Implement search() in child classes using APIs or curated datasets
  * in compliance with provider terms of use.
  */
-abstract class oer_scraper {
+abstract class oer_scraper
+{
 
     /**
      * Search for OER resources by keyword or tag.
      *
-     * @param string $query
+     * @param  string $query
      * @return array List of associative arrays describing resources.
      */
     abstract public function search(string $query): array;
@@ -23,10 +24,11 @@ abstract class oer_scraper {
     /**
      * Helper to normalise a generic resource array.
      *
-     * @param array $data
+     * @param  array $data
      * @return array
      */
-    protected function normalise(array $data): array {
+    protected function normalise(array $data): array
+    {
         return [
             'title'       => $data['title']       ?? '',
             'description' => $data['description'] ?? '',

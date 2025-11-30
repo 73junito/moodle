@@ -1,7 +1,7 @@
 <?php
 // CLI: list capabilities whose name starts with 'contenttype/'.
 define('CLI_SCRIPT', true);
-require_once(__DIR__ . '/../../../config.php');
+require_once __DIR__ . '/../../../config.php';
 global $DB;
 if (PHP_SAPI !== 'cli') {
     echo "CLI only\n";

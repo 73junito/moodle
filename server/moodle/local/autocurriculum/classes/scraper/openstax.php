@@ -6,12 +6,14 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * OpenStax-specific scraper stub.
  */
-class openstax extends oer_scraper {
+class openstax extends oer_scraper
+{
 
     /**
      * {@inheritdoc}
      */
-    public function search(string $query): array {
+    public function search(string $query): array
+    {
         // Stub: you can hard-code known ISBNs / titles or call catalog APIs.
         return [];
     }

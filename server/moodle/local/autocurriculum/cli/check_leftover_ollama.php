@@ -3,7 +3,7 @@
 // Usage: php check_leftover_ollama.php
 
 define('CLI_SCRIPT', true);
-require_once(__DIR__ . '/../../../config.php');
+require_once __DIR__ . '/../../../config.php';
 global $DB;
 
 // Only allow CLI.

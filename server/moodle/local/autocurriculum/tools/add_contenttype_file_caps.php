@@ -3,7 +3,7 @@
 // Usage: php add_contenttype_file_caps.php [--confirm]
 
 define('CLI_SCRIPT', true);
-require_once(__DIR__ . '/../../../../config.php');
+require_once __DIR__ . '/../../../../config.php';
 global $DB;
 
 if (PHP_SAPI !== 'cli') {
@@ -54,6 +54,6 @@ foreach ($toinsert as $name => $props) {
 
 // purge caches so capabilities re-register
 echo "Purging caches to refresh capabilities...\n";
-require_once($CFG->dirroot . '/admin/cli/purge_caches.php');
+require_once $CFG->dirroot . '/admin/cli/purge_caches.php';
 
 return 0;

@@ -2,7 +2,7 @@
 // Admin-only utility to probe Ghostscript from the webserver context.
 // Place under local/autocurriculum/admin and visit as a site admin.
 
-require_once(__DIR__ . '/../../../config.php');
+require_once __DIR__ . '/../../../config.php';
 require_login();
 if (!is_siteadmin()) {
     http_response_code(403);

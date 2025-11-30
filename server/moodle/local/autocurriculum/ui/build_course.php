@@ -1,5 +1,5 @@
 <?php
-require(__DIR__ . '/../../config.php');
+require __DIR__ . '/../../config.php';
 
 require_login();
 $context = context_system::instance();

@@ -3,8 +3,8 @@
 // Usage: php import_contentbank_from_files.php [--dry-run] [--userid=2]
 
 define('CLI_SCRIPT', true);
-require(__DIR__ . '/../../../config.php');
-require_once($CFG->dirroot . '/lib/clilib.php');
+require __DIR__ . '/../../../config.php';
+require_once $CFG->dirroot . '/lib/clilib.php';
 global $DB, $CFG;
 
 list($options, $unrecognized) = cli_get_params(

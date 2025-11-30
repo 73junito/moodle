@@ -1,6 +1,6 @@
 <?php
 // Admin-only: reset PHP OPcache if available. Visit this URL as site admin.
-require_once(__DIR__ . '/../../../config.php');
+require_once __DIR__ . '/../../../config.php';
 require_login();
 if (!is_siteadmin()) {
     http_response_code(403);
