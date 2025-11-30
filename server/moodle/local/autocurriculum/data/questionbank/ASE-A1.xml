@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <question type="category">
+    <category>
+      <text>ASE A1 Sample</text>
+    </category>
+  </question>
+
+  <question type="multichoice">
+    <name><text>Engine component ID – cylinder head</text></name>
+    <questiontext format="html">
+      <text><![CDATA[Which engine component forms the top of the combustion chamber and contains the valves?]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text><![CDATA[The cylinder head closes the top of the cylinders and supports the valve train components.]]></text>
+    </generalfeedback>
+    <defaultgrade>1.0000000</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <single>true</single>
+    <shuffleanswers>true</shuffleanswers>
+    <answernumbering>abc</answernumbering>
+    <answer fraction="100">
+      <text>Cylinder head</text>
+      <feedback format="html">
+        <text>Correct.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0">
+      <text>Engine block</text>
+      <feedback format="html">
+        <text>The block forms the cylinders and lower structure.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0">
+      <text>Oil pan</text>
+      <feedback format="html">
+        <text>The oil pan holds the engine oil at the bottom of the engine.</text>
+      </feedback>
+    </answer>
+    <answer fraction="0">
+      <text>Intake manifold</text>
+      <feedback format="html">
+        <text>The intake manifold distributes the air/fuel mixture.</text>
+      </feedback>
+    </answer>
+  </question>
+</quiz>

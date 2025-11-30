@@ -1,0 +1,17 @@
+{
+  "code": "AED_DIESEL",
+  "competencies": [
+    {
+      "shortname": "AED \u2013 Diesel Engines",
+      "idnumber": "AED-ENG",
+      "description": "Performs diesel engine diagnostics and repairs per AED standards.",
+      "sortorder": 1
+    },
+    {
+      "shortname": "AED \u2013 Electrical Systems",
+      "idnumber": "AED-ELEC",
+      "description": "Diagnoses and repairs diesel electrical systems per AED standards.",
+      "sortorder": 2
+    }
+  ]
+}

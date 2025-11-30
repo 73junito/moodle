@@ -1,0 +1,18 @@
+[
+    {
+        "id": "1",
+        "name": "Local Ollama (test)",
+        "provider": "aiprovider_ollama\\provider",
+        "enabled": "1",
+        "config": "{\"aiprovider\":\"aiprovider_ollama\",\"name\":\"Local Ollama (test)\",\"endpoint\":\"http:\\\/\\\/localhost:11434\",\"username\":\"\",\"password\":\"\",\"updateandreturn\":\"Update instance\",\"returnurl\":\"\",\"id\":1}",
+        "actionconfig": "{\"core_ai\\\\aiactions\\\\generate_text\":{\"enabled\":true,\"settings\":{\"model\":\"qwen3-vl\",\"systeminstruction\":\"You will receive a text input from the user. Your task is to generate text based on their request. Follow these important instructions:\\r\\n    1. Return the summary in plain text only.\\r\\n    2. Do not include any markdown formatting, greetings, or platitudes.\",\"providerid\":1},\"modelsettings\":{\"custom\":{\"modelextraparams\":\"\"}}},\"core_ai\\\\aiactions\\\\summarise_text\":{\"enabled\":true,\"settings\":{\"model\":\"qwen3-vl\",\"systeminstruction\":\"You will receive a text input from the user. Your task is to summarize the provided text. Follow these guidelines:\\r\\n    1. Condense: Shorten long passages into key points.\\r\\n    2. Simplify: Make complex information easier to understand, especially for learners.\\r\\n\\r\\nImportant Instructions:\\r\\n    1. Return the summary in plain text only.\\r\\n    2. Do not include any markdown formatting, greetings, or platitudes.\\r\\n    3. Focus on clarity, conciseness, and accessibility.\\r\\n\\r\\nEnsure the summary is easy to read and effectively conveys the main points of the original text.\",\"providerid\":1},\"modelsettings\":{\"custom\":{\"modelextraparams\":\"\"}}},\"core_ai\\\\aiactions\\\\explain_text\":{\"enabled\":true,\"settings\":{\"model\":\"qwen3-vl\",\"systeminstruction\":\"You will receive a text input from the user. Your task is to explain the provided text. Follow these guidelines:\\r\\n    1. Elaborate: Expand on key ideas and concepts, ensuring the explanation adds meaningful depth and avoids restating the text verbatim.\\r\\n    2. Simplify: Break down complex terms or ideas into simpler components, making them easy to understand for a wide audience, including learners.\\r\\n    3. Provide Context: Explain why something happens, how it works, or what its purpose is. Include relevant examples or analogies to enhance understanding where appropriate.\\r\\n    4. Organise Logically: Structure your explanation to flow naturally, beginning with fundamental ideas before moving to finer details.\\r\\n\\r\\nImportant Instructions:\\r\\n    1. Return the summary in plain text only.\\r\\n    2. Do not include any markdown formatting, greetings, or platitudes.\\r\\n    3. Focus on clarity, conciseness, and accessibility.\\r\\n\\r\\nEnsure the explanation is easy to read and effectively conveys the main points of the original text.\",\"providerid\":1},\"modelsettings\":{\"custom\":{\"modelextraparams\":\"\"}}}}"
+    },
+    {
+        "id": "2",
+        "name": "Local Ollama (test)",
+        "provider": "aiprovider_ollama",
+        "enabled": "1",
+        "config": "{\"endpoint\":\"http:\\\/\\\/localhost:11434\",\"enablebasicauth\":0,\"username\":\"\",\"password\":\"\"}",
+        "actionconfig": null
+    }
+]
