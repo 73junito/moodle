@@ -54,7 +54,9 @@ function local_autocurriculum_generate_labs($courseid, $sections)
         // Build prompt from course/section data.
         $course = $DB->get_record('course', array('id' => $courseid), 'fullname, summary');
         $section = $DB->get_record('course_sections', array('id' => $sectionid), 'name, summary');
-        $prompt = "Generate a virtual lab scenario for the course '{$course->fullname}' in section '{$section->name}'. Course summary: {$course->summary}. Section summary: {$section->summary}.";
+        $prompt = "Generate a virtual lab scenario for the course '{$course->fullname}' " .
+                  "in section '{$section->name}'. Course summary: {$course->summary}. " .
+                  "Section summary: {$section->summary}.";
 
         $response = local_autocurriculum_call_ollama($ollamaurl, $model, $prompt);
 
@@ -181,7 +183,9 @@ function local_autocurriculum_generate_labs_bulk($courseids, $customprompt = '')
                 continue;
             }
 
-            $prompt = $customprompt ?: "Generate a virtual lab scenario for the course '{$course->fullname}' in section '{$section->name}'. Course summary: {$course->summary}. Section summary: {$section->summary}.";
+            $prompt = $customprompt ?: "Generate a virtual lab scenario for the course '{$course->fullname}' " .
+                                         "in section '{$section->name}'. Course summary: {$course->summary}. " .
+                                         "Section summary: {$section->summary}.";
 
             $response = local_autocurriculum_call_ollama($ollamaurl, $model, $prompt);
 
@@ -194,7 +198,10 @@ function local_autocurriculum_generate_labs_bulk($courseids, $customprompt = '')
                 $record->timecreated = time();
                 $record->timemodified = time();
 
-                $existing = $DB->get_record('local_autocurriculum_labs', array('courseid' => $courseid, 'sectionid' => $section->id));
+                $existing = $DB->get_record(
+                    'local_autocurriculum_labs',
+                    array('courseid' => $courseid, 'sectionid' => $section->id)
+                );
                 if ($existing) {
                     $record->id = $existing->id;
                     $DB->update_record('local_autocurriculum_labs', $record);
@@ -206,7 +213,8 @@ function local_autocurriculum_generate_labs_bulk($courseids, $customprompt = '')
 
                 $successcount++;
             } else {
-                $messages[] = get_string('generation_failed', 'local_autocurriculum', $section->id) . " in course {$course->fullname}";
+                $messages[] = get_string('generation_failed', 'local_autocurriculum', $section->id) .
+                              " in course {$course->fullname}";
             }
         }
     }
@@ -287,7 +295,7 @@ function local_autocurriculum_trigger_lab_generated($courseid, $sectionid, $cont
         'context' => context_course::instance($courseid),
         'objectid' => $sectionid,
         'other' => array('content' => substr($content, 0, 100)), // Truncate for logging
-        ));
+    ));
     $event->trigger();
 }
 

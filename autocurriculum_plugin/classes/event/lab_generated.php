@@ -20,6 +20,7 @@ class lab_generated extends \core\event\base
 
     public function get_description()
     {
-        return "The user with id {$this->userid} generated a lab for section {$this->objectid} in course {$this->courseid}.";
+        return "The user with id {$this->userid} generated a lab for section {$this->objectid} " .
+               "in course {$this->courseid}.";
     }
 }
