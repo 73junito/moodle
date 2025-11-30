@@ -30,10 +30,21 @@ class generatelabs_form extends moodleform {
             $sectionoptions[$section->id] = $sectionname;
         }
 
-        $mform->addElement('select', 'sections', get_string('select_sections', 'local_autocurriculum'), $sectionoptions, array('multiple' => true));
+        $mform->addElement(
+            'select',
+            'sections',
+            get_string('select_sections', 'local_autocurriculum'),
+            $sectionoptions,
+            array('multiple' => true)
+        );
         $mform->addRule('sections', get_string('required'), 'required', null, 'client');
 
-        $mform->addElement('textarea', 'customprompt', get_string('custom_prompt', 'local_autocurriculum'), 'rows="5" cols="50"');
+        $mform->addElement(
+            'textarea',
+            'customprompt',
+            get_string('custom_prompt', 'local_autocurriculum'),
+            'rows="5" cols="50"'
+        );
         $mform->setType('customprompt', PARAM_TEXT);
 
         $this->add_action_buttons(true, get_string('generate', 'local_autocurriculum'));
@@ -52,9 +63,13 @@ if ($form->is_cancelled()) {
     $result = local_autocurriculum_generate_labs($courseid, $sections);
 
     if ($result['success'] > 0) {
-        redirect(new moodle_url('/course/view.php', array('id' => $courseid)), get_string('generatedlabs_success', 'local_autocurriculum', $result['success']), null, \core\output\notification::NOTIFY_SUCCESS);
+        $url = new moodle_url('/course/view.php', array('id' => $courseid));
+        $message = get_string('generatedlabs_success', 'local_autocurriculum', $result['success']);
+        redirect($url, $message, null, \core\output\notification::NOTIFY_SUCCESS);
     } else {
-        redirect(new moodle_url('/course/view.php', array('id' => $courseid)), get_string('generatedlabs_none', 'local_autocurriculum'), null, \core\output\notification::NOTIFY_WARNING);
+        $url = new moodle_url('/course/view.php', array('id' => $courseid));
+        $message = get_string('generatedlabs_none', 'local_autocurriculum');
+        redirect($url, $message, null, \core\output\notification::NOTIFY_WARNING);
     }
 }
 

@@ -25,10 +25,21 @@ class bulkgeneratelabs_form extends moodleform {
             $courseoptions[$course->id] = $course->fullname;
         }
 
-        $mform->addElement('select', 'courses', get_string('select_courses', 'local_autocurriculum'), $courseoptions, array('multiple' => true));
+        $mform->addElement(
+            'select',
+            'courses',
+            get_string('select_courses', 'local_autocurriculum'),
+            $courseoptions,
+            array('multiple' => true)
+        );
         $mform->addRule('courses', get_string('required'), 'required', null, 'client');
 
-        $mform->addElement('textarea', 'customprompt', get_string('custom_prompt', 'local_autocurriculum'), 'rows="5" cols="50"');
+        $mform->addElement(
+            'textarea',
+            'customprompt',
+            get_string('custom_prompt', 'local_autocurriculum'),
+            'rows="5" cols="50"'
+        );
         $mform->setType('customprompt', PARAM_TEXT);
 
         $this->add_action_buttons(true, get_string('generate_bulk', 'local_autocurriculum'));
@@ -46,9 +57,13 @@ if ($form->is_cancelled()) {
     $result = local_autocurriculum_generate_labs_bulk($selectedcourses, $customprompt);
 
     if ($result['success'] > 0) {
-        redirect(new moodle_url('/my'), get_string('bulk_generated_success', 'local_autocurriculum', $result['success']), null, \core\output\notification::NOTIFY_SUCCESS);
+        $url = new moodle_url('/my');
+        $message = get_string('bulk_generated_success', 'local_autocurriculum', $result['success']);
+        redirect($url, $message, null, \core\output\notification::NOTIFY_SUCCESS);
     } else {
-        redirect(new moodle_url('/my'), get_string('bulk_generated_none', 'local_autocurriculum'), null, \core\output\notification::NOTIFY_WARNING);
+        $url = new moodle_url('/my');
+        $message = get_string('bulk_generated_none', 'local_autocurriculum');
+        redirect($url, $message, null, \core\output\notification::NOTIFY_WARNING);
     }
 }
 

@@ -52,16 +52,85 @@ function local_autocurriculum_generate_labs($courseid, $sections) {
     }
 
     foreach ($sections as $sectionid) {
+<<<<<<< HEAD
         $course = $DB->get_record('course', ['id' => $courseid], 'fullname, summary');
         $section = $DB->get_record('course_sections', ['id' => $sectionid], 'name, summary');
 
         $prompt = "Generate a virtual lab scenario for the course '{$course->fullname}' in section '{$section->name}'. "
             . "Course summary: {$course->summary}. Section summary: {$section->summary}.";
+=======
+        // Build prompt from course/section data.
+        $course = $DB->get_record('course', array('id' => $courseid), 'fullname, summary');
+        $section = $DB->get_record('course_sections', array('id' => $sectionid), 'name, summary');
+        $prompt = "Generate a virtual lab scenario for the course '{$course->fullname}' " .
+                  "in section '{$section->name}'. Course summary: {$course->summary}. " .
+                  "Section summary: {$section->summary}.";
+>>>>>>> Reduce phpcs warnings: break long lines, convert to LF
+
+        $response = local_autocurriculum_call_ollama($ollamaurl, $model, $prompt);
+<?php
+// File: lib.php
+
+defined('MOODLE_INTERNAL') || die();
+
+/**
+ * Extends the course navigation to add "Generate Virtual Labs" link.
+ *
+ * @param navigation_node $navigation The navigation node to extend
+ * @param stdClass $course The course object
+ * @param context $context The course context
+ */
+function local_autocurriculum_extend_navigation_course($navigation, $course, $context) {
+    if (has_capability('local/autocurriculum:generatelabs', $context)) {
+        $url = new moodle_url('/local/autocurriculum/generatelabs.php', ['courseid' => $course->id]);
+        $navigation->add(
+            get_string('nav_generatelabs', 'local_autocurriculum'),
+            $url,
+            navigation_node::TYPE_SETTING,
+            null,
+            'generatelabs'
+        );
+    }
+}
+
+/**
+ * Generate labs for selected course sections.
+ *
+ * @param int $courseid
+ * @param array $sections
+ * @return array
+ */
+function local_autocurriculum_generate_labs($courseid, $sections) {
+    global $DB;
+
+    $successcount = 0;
+    $messages = [];
+
+    $ollamaurl = get_config('local_autocurriculum', 'ollama_url');
+    $model = get_config('local_autocurriculum', 'default_model');
+
+    if (defined('MOODLE_TEST')) {
+        $ollamaurl = 'http://test';
+        $model = 'test';
+    }
+
+    if (empty($ollamaurl) || empty($model)) {
+        $messages[] = get_string('ollama_not_configured', 'local_autocurriculum');
+        return ['success' => $successcount, 'messages' => $messages];
+    }
+
+    foreach ($sections as $sectionid) {
+        $course = $DB->get_record('course', ['id' => $courseid], 'fullname, summary');
+        $section = $DB->get_record('course_sections', ['id' => $sectionid], 'name, summary');
+
+        $prompt =
+            "Generate a virtual lab scenario for the course '{$course->fullname}' in section '{$section->name}'. " .
+            "Course summary: {$course->summary}. Section summary: {$section->summary}.";
 
         $response = local_autocurriculum_call_ollama($ollamaurl, $model, $prompt);
 
         if ($response) {
-            $record = (object)[
+            $record = (object) [
                 'courseid' => $courseid,
                 'sectionid' => $sectionid,
                 'content' => $response,
@@ -83,7 +152,6 @@ function local_autocurriculum_generate_labs($courseid, $sections) {
 
             local_autocurriculum_trigger_lab_generated($courseid, $sectionid, $response);
             $successcount++;
-
         } else {
             $messages[] = get_string('generation_failed', 'local_autocurriculum', $sectionid);
         }
@@ -93,11 +161,11 @@ function local_autocurriculum_generate_labs($courseid, $sections) {
 }
 
 /**
- * Calls the Ollama API to generate content.
+ * Call the Ollama API.
  *
- * @param string $url Ollama server URL
- * @param string $model Model name
- * @param string $prompt The prompt to send
+ * @param string $url
+ * @param string $model
+ * @param string $prompt
  * @return string|false
  */
 function local_autocurriculum_call_ollama($url, $model, $prompt) {
@@ -123,7 +191,7 @@ function local_autocurriculum_call_ollama($url, $model, $prompt) {
     $data = [
         'model' => $model,
         'prompt' => $prompt,
-        'stream' => false
+        'stream' => false,
     ];
 
     $response = $curl->post(
@@ -148,7 +216,7 @@ function local_autocurriculum_call_ollama($url, $model, $prompt) {
 }
 
 /**
- * Bulk generate labs for multiple courses.
+ * Bulk generate labs for courses.
  *
  * @param array $courseids
  * @param string $customprompt
@@ -191,15 +259,14 @@ function local_autocurriculum_generate_labs_bulk($courseids, $customprompt = '')
                 continue;
             }
 
-            $prompt = $customprompt ?: (
-                "Generate a virtual lab scenario for the course '{$course->fullname}' in section '{$section->name}'. "
-                . "Course summary: {$course->summary}. Section summary: {$section->summary}."
-            );
+            $prompt = $customprompt ?:
+                "Generate a virtual lab scenario for the course '{$course->fullname}' in section '{$section->name}'. " .
+                "Course summary: {$course->summary}. Section summary: {$section->summary}.";
 
             $response = local_autocurriculum_call_ollama($ollamaurl, $model, $prompt);
 
             if ($response) {
-                $record = (object)[
+                $record = (object) [
                     'courseid' => $courseid,
                     'sectionid' => $section->id,
                     'content' => $response,
@@ -221,7 +288,6 @@ function local_autocurriculum_generate_labs_bulk($courseids, $customprompt = '')
 
                 local_autocurriculum_trigger_lab_generated($courseid, $section->id, $response);
                 $successcount++;
-
             } else {
                 $messages[] =
                     get_string('generation_failed', 'local_autocurriculum', $section->id)
@@ -235,20 +301,18 @@ function local_autocurriculum_generate_labs_bulk($courseids, $customprompt = '')
 
 /**
  * Observer for course_created event.
- *
- * @param \core\event\course_created $event
  */
 function local_autocurriculum_course_created(\core\event\course_created $event) {
     global $DB;
 
     $courseid = $event->courseid;
 
-    $autogenerate = get_config('local_autocurriculum', 'auto_generate_labs');
-    if (!$autogenerate) {
+    if (!get_config('local_autocurriculum', 'auto_generate_labs')) {
         return;
     }
 
     $context = context_course::instance($courseid);
+
     if (!has_capability('local/autocurriculum:generatelabs', $context, $event->userid)) {
         return;
     }
@@ -270,7 +334,7 @@ function local_autocurriculum_course_created(\core\event\course_created $event) 
 }
 
 /**
- * Check rate limit for Ollama calls.
+ * Check rate limit.
  *
  * @param int $userid
  * @return bool
@@ -294,7 +358,7 @@ function local_autocurriculum_check_rate_limit($userid) {
 }
 
 /**
- * Trigger lab generated event.
+ * Trigger lab_generated event.
  *
  * @param int $courseid
  * @param int $sectionid
@@ -306,12 +370,11 @@ function local_autocurriculum_trigger_lab_generated($courseid, $sectionid, $cont
         'objectid' => $sectionid,
         'other' => ['content' => substr($content, 0, 100)],
     ]);
-
     $event->trigger();
 }
 
 /**
- * Scan a course for missing or incomplete elements.
+ * Scan course for missing data.
  *
  * @param int $courseid
  * @return array
@@ -330,8 +393,7 @@ function local_autocurriculum_scan_course($courseid) {
         $missing[] = 'description';
     }
 
-    $lessoncount = $DB->count_records('lesson', ['course' => $courseid]);
-    if ($lessoncount == 0) {
+    if ($DB->count_records('lesson', ['course' => $courseid]) == 0) {
         $missing[] = 'lessons';
     }
 
@@ -346,12 +408,12 @@ function local_autocurriculum_scan_course($courseid) {
             break;
         }
     }
+
     if (!$has_syllabus) {
         $missing[] = 'syllabus';
     }
 
-    $qcount = $DB->count_records('question_categories', ['contextid' => $context->id]);
-    if ($qcount == 0) {
+    if ($DB->count_records('question_categories', ['contextid' => $context->id]) == 0) {
         $missing[] = 'question banks';
     }
 
