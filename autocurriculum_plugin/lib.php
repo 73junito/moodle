@@ -264,13 +264,11 @@ function local_autocurriculum_check_rate_limit($userid)
  */
 function local_autocurriculum_trigger_lab_generated($courseid, $sectionid, $content)
 {
-    $event = \local_autocurriculum\event\lab_generated::create(
-        array(
+    $event = \local_autocurriculum\event\LabGenerated::create(array(
         'context' => context_course::instance($courseid),
         'objectid' => $sectionid,
         'other' => array('content' => substr($content, 0, 100)), // Truncate for logging
-        )
-    );
+        ));
     $event->trigger();
 }
 

@@ -4,7 +4,7 @@ namespace local_autocurriculum\event;
 
 defined('MOODLE_INTERNAL') || die();
 
-class lab_generated extends \core\event\base
+class LabGenerated extends \core\event\base
 {
     protected function init()
     {
