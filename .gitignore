@@ -1,0 +1,40 @@
+# Ignore Moodle runtime files and common binaries
+
+# Moodle dataroot and uploads
+moodledata/
+
+# Local configuration
+config.php
+config-dist.php
+
+# Backups and dumps
+backups/
+*.sql
+*.sql.gz
+*.zip
+
+# PHP / Node / Composer
+vendor/
+node_modules/
+composer.lock
+npm-shrinkwrap.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# log / cache
+*.log
+cache/
+tmp/
+
+# IDE/editor
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Server bundles and runtime (do not commit full mysql/php stacks)
+server/mysql/
+server/php/
+server/apache/logs/
+
