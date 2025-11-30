@@ -45,4 +45,15 @@ class generatelabs_test extends advanced_testcase
 
         $this->assertGreaterThan(0, $result['success']);
     }
+
+    public function test_generate_labs_no_sections()
+    {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+
+        $result = local_autocurriculum_generate_labs($course->id, array());
+
+        $this->assertEquals(0, $result['success']);
+    }
 }
