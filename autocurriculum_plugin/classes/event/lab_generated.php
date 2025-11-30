@@ -13,12 +13,12 @@ class LabGenerated extends \core\event\base
         $this->data['objecttable'] = 'local_autocurriculum_labs';
     }
 
-    public static function get_name()
+    public function getName()
     {
         return get_string('event_lab_generated', 'local_autocurriculum');
     }
 
-    public function get_description()
+    public function getDescription()
     {
         return "The user with id {$this->userid} generated a lab for section {$this->objectid} in course {$this->courseid}.";
     }

@@ -2,8 +2,12 @@
 
 // File: generatelabs.php
 
+defined('MOODLE_INTERNAL') || die();
+
 require __DIR__ . '/../../config.php';
 require_once $CFG->libdir . '/formslib.php';
+
+namespace local_autocurriculum;
 
 require_login();
 
@@ -17,7 +21,7 @@ $PAGE->set_context($context);
 $PAGE->set_title(get_string('generatelabs', 'local_autocurriculum'));
 $PAGE->set_heading($course->fullname);
 
-class generatelabs_form extends moodleform
+class GeneratelabsForm extends moodleform
 {
     public function definition()
     {
@@ -43,7 +47,7 @@ class generatelabs_form extends moodleform
     }
 }
 
-$form = new generatelabs_form(null, array('courseid' => $courseid));
+$form = new GeneratelabsForm(null, array('courseid' => $courseid));
 
 if ($form->is_cancelled()) {
     redirect(new moodle_url('/course/view.php', array('id' => $courseid)));

@@ -4,6 +4,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+namespace local_autocurriculum;
+
 global $CFG;
 require_once $CFG->dirroot . '/local/autocurriculum/lib.php';
 

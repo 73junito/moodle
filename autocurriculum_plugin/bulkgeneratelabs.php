@@ -2,8 +2,12 @@
 
 // File: bulkgeneratelabs.php
 
+defined('MOODLE_INTERNAL') || die();
+
 require __DIR__ . '/../../config.php';
 require_once $CFG->libdir . '/formslib.php';
+
+namespace local_autocurriculum;
 
 require_login();
 
@@ -15,7 +19,7 @@ $PAGE->set_context($context);
 $PAGE->set_title(get_string('bulk_generatelabs', 'local_autocurriculum'));
 $PAGE->set_heading(get_string('bulk_generatelabs', 'local_autocurriculum'));
 
-class bulkgeneratelabs_form extends moodleform
+class BulkgeneratelabsForm extends moodleform
 {
     public function definition()
     {
@@ -38,7 +42,7 @@ class bulkgeneratelabs_form extends moodleform
     }
 }
 
-$form = new bulkgeneratelabs_form();
+$form = new BulkgeneratelabsForm();
 
 if ($form->is_cancelled()) {
     redirect(new moodle_url('/my'));
