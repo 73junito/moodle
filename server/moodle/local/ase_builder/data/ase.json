@@ -1,0 +1,17 @@
+{
+  "code": "ASE_AUTO",
+  "competencies": [
+    {
+      "shortname": "ASE A1 \u2013 Engine Repair",
+      "idnumber": "ASE-A1",
+      "description": "Performs engine diagnostics and repairs to ASE A1 standard.",
+      "sortorder": 1
+    },
+    {
+      "shortname": "ASE A6 \u2013 Electrical/Electronic Systems",
+      "idnumber": "ASE-A6",
+      "description": "Diagnoses and repairs automotive electrical and electronic systems.",
+      "sortorder": 2
+    }
+  ]
+}
