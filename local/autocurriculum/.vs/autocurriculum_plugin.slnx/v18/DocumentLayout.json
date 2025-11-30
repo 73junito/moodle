@@ -1,0 +1,500 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Moodle\\autocurriculum_plugin\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\version.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:version.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\lib.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:lib.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\labs.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:labs.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\lang\\en\\local_autocurriculum.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:lang\\en\\local_autocurriculum.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\db\\access.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:db\\access.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\db\\install.xml||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:db\\install.xml||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\forms\\labs_form.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:forms\\labs_form.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\classes\\api\\lab_autobuilder.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:classes\\api\\lab_autobuilder.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\classes\\generator\\lab_generator.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:classes\\generator\\lab_generator.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\classes\\api\\ollama_client.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:classes\\api\\ollama_client.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\mod\\virtualgarage\\version.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:mod\\virtualgarage\\version.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\mod\\virtualgarage\\lib.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:mod\\virtualgarage\\lib.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\mod\\virtualgarage\\db\\access.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:mod\\virtualgarage\\db\\access.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\mod\\virtualgarage\\db\\install.xml||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:mod\\virtualgarage\\db\\install.xml||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\mod\\virtualgarage\\view.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:mod\\virtualgarage\\view.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\mod\\virtualgarage\\classes\\external\\submit_result.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:mod\\virtualgarage\\classes\\external\\submit_result.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\mod\\virtualgarage\\db\\services.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:mod\\virtualgarage\\db\\services.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\mod\\virtualgarage\\mod_form.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:mod\\virtualgarage\\mod_form.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\mod\\virtualgarage\\lang\\en\\virtualgarage.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:mod\\virtualgarage\\lang\\en\\virtualgarage.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\assets\\scripts\\core\\scenariomanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:assets\\scripts\\core\\scenariomanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\assets\\scripts\\core\\steptracker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:assets\\scripts\\core\\steptracker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\assets\\scripts\\lms\\resultreporter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:assets\\scripts\\lms\\resultreporter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\assets\\scripts\\interactions\\clickablepart.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:assets\\scripts\\interactions\\clickablepart.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\assets\\scripts\\interactions\\playerinteraction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:assets\\scripts\\interactions\\playerinteraction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\assets\\scripts\\ui\\checklistui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:assets\\scripts\\ui\\checklistui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\assets\\scripts\\ui\\resultpanelcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:assets\\scripts\\ui\\resultpanelcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|d:\\moodle\\autocurriculum_plugin\\assets\\resources\\scenariodefinitions\\brakelab01.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{5DED861E-D9CD-2D29-3D42-AC522DD34604}|autocurriculum_plugin.csproj|solutionrelative:assets\\resources\\scenariodefinitions\\brakelab01.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 10,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "services.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\db\\services.php",
+              "RelativeDocumentMoniker": "mod\\virtualgarage\\db\\services.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\db\\services.php",
+              "RelativeToolTip": "mod\\virtualgarage\\db\\services.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAACAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:13:15.351Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "version.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\version.php",
+              "RelativeDocumentMoniker": "mod\\virtualgarage\\version.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\version.php",
+              "RelativeToolTip": "mod\\virtualgarage\\version.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAdAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:12:25.53Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "lab_generator.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\classes\\generator\\lab_generator.php",
+              "RelativeDocumentMoniker": "classes\\generator\\lab_generator.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\classes\\generator\\lab_generator.php",
+              "RelativeToolTip": "classes\\generator\\lab_generator.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAIUAAAABAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:12:07.354Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "lab_autobuilder.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\classes\\api\\lab_autobuilder.php",
+              "RelativeDocumentMoniker": "classes\\api\\lab_autobuilder.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\classes\\api\\lab_autobuilder.php",
+              "RelativeToolTip": "classes\\api\\lab_autobuilder.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFkAAAABAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:11:53.876Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "labs_form.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\forms\\labs_form.php",
+              "RelativeDocumentMoniker": "forms\\labs_form.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\forms\\labs_form.php",
+              "RelativeToolTip": "forms\\labs_form.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAG0AAAABAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:11:41.855Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "install.xml",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\db\\install.xml",
+              "RelativeDocumentMoniker": "db\\install.xml",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\db\\install.xml",
+              "RelativeToolTip": "db\\install.xml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB8AAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003576|",
+              "WhenOpened": "2025-11-28T03:11:25.504Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "access.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\db\\access.php",
+              "RelativeDocumentMoniker": "db\\access.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\db\\access.php",
+              "RelativeToolTip": "db\\access.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAACAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:11:14.457Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "local_autocurriculum.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\lang\\en\\local_autocurriculum.php",
+              "RelativeDocumentMoniker": "lang\\en\\local_autocurriculum.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\lang\\en\\local_autocurriculum.php",
+              "RelativeToolTip": "lang\\en\\local_autocurriculum.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAA6AAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:11:08.277Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "labs.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\labs.php",
+              "RelativeDocumentMoniker": "labs.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\labs.php",
+              "RelativeToolTip": "labs.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAHMAAAAXAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:11:04.062Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-27T22:47:38.792Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "BrakeLab01.json",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Resources\\ScenarioDefinitions\\BrakeLab01.json",
+              "RelativeDocumentMoniker": "Assets\\Resources\\ScenarioDefinitions\\BrakeLab01.json",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Resources\\ScenarioDefinitions\\BrakeLab01.json",
+              "RelativeToolTip": "Assets\\Resources\\ScenarioDefinitions\\BrakeLab01.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACkAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-11-28T03:15:06.17Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "ResultPanelController.cs",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\UI\\ResultPanelController.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\UI\\ResultPanelController.cs",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\UI\\ResultPanelController.cs",
+              "RelativeToolTip": "Assets\\Scripts\\UI\\ResultPanelController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAHUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-28T03:14:52.718Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "ChecklistUI.cs",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\UI\\ChecklistUI.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\UI\\ChecklistUI.cs",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\UI\\ChecklistUI.cs",
+              "RelativeToolTip": "Assets\\Scripts\\UI\\ChecklistUI.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-28T03:14:36.787Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "PlayerInteraction.cs",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\Interactions\\PlayerInteraction.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Interactions\\PlayerInteraction.cs",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\Interactions\\PlayerInteraction.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Interactions\\PlayerInteraction.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFMAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-28T03:14:27.082Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "ClickablePart.cs",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\Interactions\\ClickablePart.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Interactions\\ClickablePart.cs",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\Interactions\\ClickablePart.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Interactions\\ClickablePart.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAJ8AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-28T03:14:16.409Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "ResultReporter.cs",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\LMS\\ResultReporter.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\LMS\\ResultReporter.cs",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\LMS\\ResultReporter.cs",
+              "RelativeToolTip": "Assets\\Scripts\\LMS\\ResultReporter.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAMgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-28T03:14:04.562Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "StepTracker.cs",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\Core\\StepTracker.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Core\\StepTracker.cs",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\Core\\StepTracker.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Core\\StepTracker.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAIgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-28T03:13:57.054Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "ScenarioManager.cs",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\Core\\ScenarioManager.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Core\\ScenarioManager.cs",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\Assets\\Scripts\\Core\\ScenarioManager.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Core\\ScenarioManager.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAGgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-28T03:13:50.905Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "virtualgarage.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\lang\\en\\virtualgarage.php",
+              "RelativeDocumentMoniker": "mod\\virtualgarage\\lang\\en\\virtualgarage.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\lang\\en\\virtualgarage.php",
+              "RelativeToolTip": "mod\\virtualgarage\\lang\\en\\virtualgarage.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADEAAABlAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:13:36.911Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "lib.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\lib.php",
+              "RelativeDocumentMoniker": "lib.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\lib.php",
+              "RelativeToolTip": "lib.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACkAAAABAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:10:53.757Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "mod_form.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\mod_form.php",
+              "RelativeDocumentMoniker": "mod\\virtualgarage\\mod_form.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\mod_form.php",
+              "RelativeToolTip": "mod\\virtualgarage\\mod_form.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEIAAAABAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:13:27.404Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "submit_result.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\classes\\external\\submit_result.php",
+              "RelativeDocumentMoniker": "mod\\virtualgarage\\classes\\external\\submit_result.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\classes\\external\\submit_result.php",
+              "RelativeToolTip": "mod\\virtualgarage\\classes\\external\\submit_result.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAG0AAAABAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:13:11.088Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "version.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\version.php",
+              "RelativeDocumentMoniker": "version.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\version.php",
+              "RelativeToolTip": "version.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAdAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:10:40.435Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "view.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\view.php",
+              "RelativeDocumentMoniker": "mod\\virtualgarage\\view.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\view.php",
+              "RelativeToolTip": "mod\\virtualgarage\\view.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEwAAAAXAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:13:01.995Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "install.xml",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\db\\install.xml",
+              "RelativeDocumentMoniker": "mod\\virtualgarage\\db\\install.xml",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\db\\install.xml",
+              "RelativeToolTip": "mod\\virtualgarage\\db\\install.xml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADYAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003576|",
+              "WhenOpened": "2025-11-28T03:12:56.227Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "access.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\db\\access.php",
+              "RelativeDocumentMoniker": "mod\\virtualgarage\\db\\access.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\db\\access.php",
+              "RelativeToolTip": "mod\\virtualgarage\\db\\access.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABwAAAACAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:12:48.161Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "lib.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\lib.php",
+              "RelativeDocumentMoniker": "mod\\virtualgarage\\lib.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\mod\\virtualgarage\\lib.php",
+              "RelativeToolTip": "mod\\virtualgarage\\lib.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAMQAAAABAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:12:36.191Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "ollama_client.php",
+              "DocumentMoniker": "D:\\Moodle\\autocurriculum_plugin\\classes\\api\\ollama_client.php",
+              "RelativeDocumentMoniker": "classes\\api\\ollama_client.php",
+              "ToolTip": "D:\\Moodle\\autocurriculum_plugin\\classes\\api\\ollama_client.php",
+              "RelativeToolTip": "classes\\api\\ollama_client.php",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAFMAAAABAAAAAAAAAA==",
+              "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
+              "WhenOpened": "2025-11-28T03:12:13.438Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
