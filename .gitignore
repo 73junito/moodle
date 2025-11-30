@@ -41,3 +41,13 @@ server/apache/logs/
 # Tools (local developer utilities) - do not commit
 server/moodle/tools/
 
+# Visual Studio workspace + Copilot snapshots (ignore workspace state and indices)
+.vs/
+
+# PHPCBF dry-run artifacts and PHPCS reports
+phpcbf-dryrun-*
+phpcs-report-*.json
+
+# Local test DB instances / mariaDB test folders
+mariadb-*-test/
+
