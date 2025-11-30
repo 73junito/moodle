@@ -1,7 +1,7 @@
 <?php
 // File: scan.php
 
-require(__DIR__ . '/../../config.php');
+require __DIR__ . '/../../config.php';
 
 require_login();
 require_capability('moodle/site:config', context_system::instance()); // Require admin
@@ -39,9 +39,13 @@ if (empty($results)) {
     $table->data = array();
 
     foreach ($results as $courseid => $result) {
-        $missing_str = implode(', ', array_map(function($item) {
-            return get_string('missing_' . str_replace(' ', '_', $item), 'local_autocurriculum');
-        }, $result['missing']));
+        $missing_str = implode(
+            ', ', array_map(
+                function ($item) {
+                    return get_string('missing_' . str_replace(' ', '_', $item), 'local_autocurriculum');
+                }, $result['missing']
+            )
+        );
         $table->data[] = array(
             $result['fullname'],
             $missing_str

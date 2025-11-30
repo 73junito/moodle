@@ -7,10 +7,11 @@ defined('MOODLE_INTERNAL') || die();
  * Extends the course navigation to add "Generate Virtual Labs" link.
  *
  * @param navigation_node $navigation The navigation node to extend
- * @param stdClass $course The course object
- * @param context $context The course context
+ * @param stdClass        $course     The course object
+ * @param context         $context    The course context
  */
-function local_autocurriculum_extend_navigation_course($navigation, $course, $context) {
+function local_autocurriculum_extend_navigation_course($navigation, $course, $context)
+{
     // Only show to users with editing rights in the course.
     if (has_capability('local/autocurriculum:generatelabs', $context)) {
         $url = new moodle_url('/local/autocurriculum/generatelabs.php', array('courseid' => $course->id));
@@ -22,11 +23,12 @@ function local_autocurriculum_extend_navigation_course($navigation, $course, $co
  * Placeholder function for generating labs.
  * This should be expanded to call Ollama API and create lab content.
  *
- * @param int $courseid The course ID
- * @param array $sections Array of section IDs to generate labs for
+ * @param  int   $courseid The course ID
+ * @param  array $sections Array of section IDs to generate labs for
  * @return array Result with success count and messages
  */
-function local_autocurriculum_generate_labs($courseid, $sections) {
+function local_autocurriculum_generate_labs($courseid, $sections)
+{
     global $DB;
 
     $successcount = 0;
@@ -83,12 +85,13 @@ function local_autocurriculum_generate_labs($courseid, $sections) {
 /**
  * Calls the Ollama API to generate content.
  *
- * @param string $url Ollama server URL
- * @param string $model Model name
- * @param string $prompt The prompt to send
+ * @param  string $url    Ollama server URL
+ * @param  string $model  Model name
+ * @param  string $prompt The prompt to send
  * @return string|false The response content or false on failure
  */
-function local_autocurriculum_call_ollama($url, $model, $prompt) {
+function local_autocurriculum_call_ollama($url, $model, $prompt)
+{
     global $USER;
 
     if (!local_autocurriculum_check_rate_limit($USER->id)) {
@@ -127,11 +130,12 @@ function local_autocurriculum_call_ollama($url, $model, $prompt) {
 /**
  * Bulk generate labs for multiple courses.
  *
- * @param array $courseids Array of course IDs
- * @param string $customprompt Optional custom prompt
+ * @param  array  $courseids    Array of course IDs
+ * @param  string $customprompt Optional custom prompt
  * @return array Result with success count and messages
  */
-function local_autocurriculum_generate_labs_bulk($courseids, $customprompt = '') {
+function local_autocurriculum_generate_labs_bulk($courseids, $customprompt = '')
+{
     global $DB;
 
     $successcount = 0;
@@ -200,7 +204,8 @@ function local_autocurriculum_generate_labs_bulk($courseids, $customprompt = '')
  *
  * @param \core\event\course_created $event
  */
-function local_autocurriculum_course_created(\core\event\course_created $event) {
+function local_autocurriculum_course_created(\core\event\course_created $event)
+{
     global $DB;
 
     $courseid = $event->courseid;
@@ -234,10 +239,11 @@ function local_autocurriculum_course_created(\core\event\course_created $event) 
 /**
  * Check rate limit for Ollama calls.
  *
- * @param int $userid User ID
+ * @param  int $userid User ID
  * @return bool True if allowed
  */
-function local_autocurriculum_check_rate_limit($userid) {
+function local_autocurriculum_check_rate_limit($userid)
+{
     global $DB;
 
     $cache = cache::make('local_autocurriculum', 'ratelimit');
@@ -255,22 +261,26 @@ function local_autocurriculum_check_rate_limit($userid) {
 /**
  * Trigger lab generated event.
  */
-function local_autocurriculum_trigger_lab_generated($courseid, $sectionid, $content) {
-    $event = \local_autocurriculum\event\lab_generated::create(array(
+function local_autocurriculum_trigger_lab_generated($courseid, $sectionid, $content)
+{
+    $event = \local_autocurriculum\event\lab_generated::create(
+        array(
         'context' => context_course::instance($courseid),
         'objectid' => $sectionid,
         'other' => array('content' => substr($content, 0, 100)), // Truncate for logging
-    ));
+        )
+    );
     $event->trigger();
 }
 
 /**
  * Scan a course for missing or incomplete elements.
  *
- * @param int $courseid The course ID
+ * @param  int $courseid The course ID
  * @return array List of missing elements
  */
-function local_autocurriculum_scan_course($courseid) {
+function local_autocurriculum_scan_course($courseid)
+{
     global $DB;
 
     $missing = array();

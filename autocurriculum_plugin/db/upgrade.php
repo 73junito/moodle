@@ -3,15 +3,16 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir.'/db/upgradelib.php'); // Include upgradelib for upgrade functions.
+require_once $CFG->libdir.'/db/upgradelib.php'; // Include upgradelib for upgrade functions.
 
 /**
  * Upgrade code for the local_autocurriculum plugin.
  *
- * @param int $oldversion The version we are upgrading from.
+ * @param  int $oldversion The version we are upgrading from.
  * @return bool
  */
-function xmldb_local_autocurriculum_upgrade($oldversion) {
+function xmldb_local_autocurriculum_upgrade($oldversion)
+{
     global $DB;
 
     $dbman = $DB->get_manager();

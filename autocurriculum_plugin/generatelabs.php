@@ -1,8 +1,8 @@
 <?php
 // File: generatelabs.php
 
-require(__DIR__ . '/../../config.php');
-require_once($CFG->libdir . '/formslib.php');
+require __DIR__ . '/../../config.php';
+require_once $CFG->libdir . '/formslib.php';
 
 require_login();
 
@@ -16,8 +16,10 @@ $PAGE->set_context($context);
 $PAGE->set_title(get_string('generatelabs', 'local_autocurriculum'));
 $PAGE->set_heading($course->fullname);
 
-class generatelabs_form extends moodleform {
-    public function definition() {
+class generatelabs_form extends moodleform
+{
+    public function definition()
+    {
         $mform = $this->_form;
 
         $courseid = $this->_customdata['courseid'];

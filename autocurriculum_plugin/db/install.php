@@ -6,7 +6,8 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Code run after the plugin is installed.
  */
-function xmldb_local_autocurriculum_install() {
+function xmldb_local_autocurriculum_install()
+{
     // Placeholder for post-install tasks (e.g., create default config, cron tasks).
     return true;
 }
@@ -14,7 +15,8 @@ function xmldb_local_autocurriculum_install() {
 /**
  * Code run after the plugin is uninstalled.
  */
-function xmldb_local_autocurriculum_uninstall() {
+function xmldb_local_autocurriculum_uninstall()
+{
     // Clean up any plugin-specific data if necessary.
     return true;
 }

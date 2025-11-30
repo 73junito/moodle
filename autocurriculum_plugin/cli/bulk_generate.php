@@ -1,9 +1,9 @@
 <?php
 define('CLI_SCRIPT', true);
 
-require_once(__DIR__ . '/../../../config.php');
-require_once($CFG->libdir . '/clilib.php');
-require_once($CFG->dirroot . '/local/autocurriculum/lib.php');
+require_once __DIR__ . '/../../../config.php';
+require_once $CFG->libdir . '/clilib.php';
+require_once $CFG->dirroot . '/local/autocurriculum/lib.php';
 
 // Get CLI options.
 $longoptions = array(

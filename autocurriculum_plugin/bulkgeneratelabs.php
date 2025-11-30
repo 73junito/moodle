@@ -1,8 +1,8 @@
 <?php
 // File: bulkgeneratelabs.php
 
-require(__DIR__ . '/../../config.php');
-require_once($CFG->libdir . '/formslib.php');
+require __DIR__ . '/../../config.php';
+require_once $CFG->libdir . '/formslib.php';
 
 require_login();
 
@@ -14,8 +14,10 @@ $PAGE->set_context($context);
 $PAGE->set_title(get_string('bulk_generatelabs', 'local_autocurriculum'));
 $PAGE->set_heading(get_string('bulk_generatelabs', 'local_autocurriculum'));
 
-class bulkgeneratelabs_form extends moodleform {
-    public function definition() {
+class bulkgeneratelabs_form extends moodleform
+{
+    public function definition()
+    {
         $mform = $this->_form;
 
         // Get all courses the user can access.
