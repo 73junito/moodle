@@ -9,12 +9,14 @@ use \curl;
  * SkillsCommons-specific scraper.
  * Uses SkillsCommons API to search for resources.
  */
-class skillscommons extends oer_scraper {
+class skillscommons extends oer_scraper
+{
 
     /**
      * {@inheritdoc}
      */
-    public function search(string $query): array {
+    public function search(string $query): array
+    {
         $curl = new \curl();
         $url = 'https://www.skillscommons.org/api/v1/resources/?q=' . urlencode($query);
         $response = $curl->get($url);
@@ -30,13 +32,15 @@ class skillscommons extends oer_scraper {
 
         $results = [];
         foreach ($data['results'] as $item) {
-            $results[] = $this->normalise([
+            $results[] = $this->normalise(
+                [
                 'title' => $item['title'] ?? '',
                 'description' => $item['description'] ?? '',
                 'url' => $item['url'] ?? '',
                 'license' => $item['license'] ?? '',
                 'source' => 'SkillsCommons',
-            ]);
+                ]
+            );
         }
 
         return $results;

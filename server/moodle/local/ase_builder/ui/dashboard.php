@@ -1,5 +1,5 @@
 <?php
-require(__DIR__ . '/../../config.php');
+require __DIR__ . '/../../config.php';
 
 require_login();
 $context = context_system::instance();
@@ -22,8 +22,10 @@ $buildurl = new moodle_url('/local/ase_builder/ui/build_course.php');
 
 echo html_writer::start_tag('form', ['method' => 'post', 'action' => $buildurl]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
-echo html_writer::empty_tag('input', ['type' => 'submit', 'value' => get_string('build_now', 'local_ase_builder'),
-    'class' => 'btn btn-primary']);
+echo html_writer::empty_tag(
+    'input', ['type' => 'submit', 'value' => get_string('build_now', 'local_ase_builder'),
+    'class' => 'btn btn-primary']
+);
 echo html_writer::end_tag('form');
 
 echo $OUTPUT->footer();

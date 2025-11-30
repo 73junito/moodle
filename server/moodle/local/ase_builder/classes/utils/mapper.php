@@ -11,14 +11,16 @@ defined('MOODLE_INTERNAL') || die();
  * - ASE T1–T8 (Medium/Heavy Truck)
  * - AED Diesel core areas
  */
-class mapper {
+class mapper
+{
 
     /**
      * Get default ASE Automotive course mappings (A1–A8).
      *
      * @return array
      */
-    public function get_ase_course_map(): array {
+    public function get_ase_course_map(): array
+    {
         return [
             'ASE A1' => [
                 'shortname'   => 'ASE-A1',
@@ -148,7 +150,8 @@ class mapper {
      *
      * @return array
      */
-    public function get_truck_course_map(): array {
+    public function get_truck_course_map(): array
+    {
         return [
             'ASE T1' => [
                 'shortname' => 'ASE-T1',
@@ -278,7 +281,8 @@ class mapper {
      *
      * @return array
      */
-    public function get_aed_course_map(): array {
+    public function get_aed_course_map(): array
+    {
         return [
             'AED DIESEL ENGINES' => [
                 'shortname' => 'AED-ENG',

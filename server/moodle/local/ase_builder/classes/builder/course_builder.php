@@ -17,17 +17,19 @@ use local_ase_builder\utils\license as license_utils;
 /**
  * Creates ASE / AED-aligned courses under the configured category.
  */
-class course_builder {
+class course_builder
+{
 
     /**
      * Build all ASE / AED program courses.
      *
      * @return void
      */
-    public function build_all_programs(): void {
+    public function build_all_programs(): void
+    {
         global $CFG;
 
-        require_once($CFG->dirroot . '/course/lib.php');
+        include_once $CFG->dirroot . '/course/lib.php';
 
         $config = get_config('local_ase_builder');
         $targetcategoryname = $config->targetcategory ?? 'Automotive & Diesel Technology';
@@ -68,10 +70,11 @@ class course_builder {
     /**
      * Find or create the target course category.
      *
-     * @param string $name
+     * @param  string $name
      * @return \core_course_category
      */
-    protected function get_or_create_category(string $name): \core_course_category {
+    protected function get_or_create_category(string $name): \core_course_category
+    {
         $categories = core_course_category::get_all();
         foreach ($categories as $cat) {
             if (trim($cat->name) === trim($name)) {
@@ -79,12 +82,14 @@ class course_builder {
             }
         }
 
-        return core_course_category::create([
+        return core_course_category::create(
+            [
             'name'     => $name,
             'idnumber' => 'ASE_AED_AUTO_DIESEL',
             'visible'  => 1,
             'parent'   => 0,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -93,15 +98,16 @@ class course_builder {
      *  - wire in OER resources to content bank importer
      *  - import any XML-based question bank
      *
-     * @param int    $categoryid
-     * @param string $code
-     * @param array  $spec
+     * @param  int    $categoryid
+     * @param  string $code
+     * @param  array  $spec
      * @return void
      */
-    protected function create_or_update_course(int $categoryid, string $code, array $spec): void {
+    protected function create_or_update_course(int $categoryid, string $code, array $spec): void
+    {
         global $DB, $CFG;
 
-        require_once($CFG->dirroot . '/course/lib.php');
+        include_once $CFG->dirroot . '/course/lib.php';
 
         $shortname   = $spec['shortname'] ?? $code;
         $fullname    = $spec['fullname'] ?? $code;
@@ -149,10 +155,11 @@ class course_builder {
     /**
      * Use scraper classes to discover OER resources for a given course code.
      *
-     * @param string $coursecode
+     * @param  string $coursecode
      * @return array
      */
-    protected function find_oer_for_course(string $coursecode): array {
+    protected function find_oer_for_course(string $coursecode): array
+    {
         $resources = [];
 
         $config = get_config('local_ase_builder');

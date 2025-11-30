@@ -10,16 +10,18 @@ defined('MOODLE_INTERNAL') || die();
  * to import H5P, SCORM, and other assets discovered by the scraper
  * classes. This class wires the scraper outputs into a single point.
  */
-class contentbank_importer {
+class contentbank_importer
+{
 
     /**
      * Import a list of resources into the content bank or course.
      *
-     * @param int   $courseid
-     * @param array $resources Normalised OER resource arrays.
+     * @param  int   $courseid
+     * @param  array $resources Normalised OER resource arrays.
      * @return void
      */
-    public function import(int $courseid, array $resources): void {
+    public function import(int $courseid, array $resources): void
+    {
         // This is intentionally conservative: instead of performing
         // remote downloads by default, we simply document where the
         // resources would be imported. You can extend this class to:

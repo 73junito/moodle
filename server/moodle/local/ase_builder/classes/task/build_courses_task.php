@@ -8,12 +8,14 @@ use local_ase_builder\builder\course_builder;
 /**
  * Adhoc task to build ASE/AED courses asynchronously.
  */
-class build_courses_task extends \core\task\adhoc_task {
+class build_courses_task extends \core\task\adhoc_task
+{
 
     /**
      * Execute the task.
      */
-    public function execute() {
+    public function execute()
+    {
         $builder = new course_builder();
         $builder->build_all_programs();
     }
@@ -23,7 +25,8 @@ class build_courses_task extends \core\task\adhoc_task {
      *
      * @return string
      */
-    public function get_name() {
+    public function get_name()
+    {
         return get_string('buildcourses', 'local_ase_builder');
     }
 }

@@ -6,19 +6,21 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Section builder for creating topic sections with rich layouts.
  */
-class section_builder {
+class section_builder
+{
 
     /**
      * Ensure a course has at least the requested number of sections.
      *
-     * @param \stdClass $course
-     * @param int        $numsections
+     * @param  \stdClass $course
+     * @param  int       $numsections
      * @return void
      */
-    public function ensure_sections(\stdClass $course, int $numsections): void {
+    public function ensure_sections(\stdClass $course, int $numsections): void
+    {
         global $CFG;
 
-        require_once($CFG->dirroot . '/course/lib.php');
+        include_once $CFG->dirroot . '/course/lib.php';
 
         if ($numsections < 1) {
             $numsections = 1;
@@ -35,11 +37,12 @@ class section_builder {
      *
      * Each layout entry becomes the title of one section (starting at 1).
      *
-     * @param \stdClass $course
-     * @param array      $layout
+     * @param  \stdClass $course
+     * @param  array     $layout
      * @return void
      */
-    public function apply_layout(\stdClass $course, array $layout): void {
+    public function apply_layout(\stdClass $course, array $layout): void
+    {
         global $DB;
 
         if (empty($layout)) {

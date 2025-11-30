@@ -11,14 +11,16 @@ use core_competency\api as competency_api;
  * NOTE: This is a minimal example implementation. You can safely extend
  * this to support updates, versioning, and additional frameworks.
  */
-class competency_loader {
+class competency_loader
+{
 
     /**
      * Import frameworks from the plugin's data JSON files.
      *
      * @return void
      */
-    public function import_all(): void {
+    public function import_all(): void
+    {
         global $CFG;
 
         $datapath = $CFG->dirroot . '/local/ase_builder/data';
@@ -42,23 +44,27 @@ class competency_loader {
             // if the framework already exists, handle updates, etc.
             $shortcode = $json['code'] ?? pathinfo($file, PATHINFO_FILENAME);
 
-            $framework = competency_api::create_framework((object)[
+            $framework = competency_api::create_framework(
+                (object)[
                 'shortname'   => $shortcode,
                 'idnumber'    => $shortcode,
                 'description' => $description,
                 'scaleid'     => 1, // Default scale; adjust per site policy.
                 'visible'     => 1,
-            ]);
+                ]
+            );
 
             foreach ($json['competencies'] as $idx => $comp) {
-                competency_api::create_competency((object)[
+                competency_api::create_competency(
+                    (object)[
                     'shortname'     => $comp['shortname'],
                     'idnumber'      => $comp['idnumber'],
                     'description'   => $comp['description'] ?? '',
                     'frameworkid'   => $framework->get('id'),
                     'sortorder'     => $comp['sortorder'] ?? $idx,
                     'visible'       => 1,
-                ]);
+                    ]
+                );
             }
         }
     }

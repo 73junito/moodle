@@ -13,17 +13,19 @@ defined('MOODLE_INTERNAL') || die();
  *   - {shortname}.xml      e.g., ASE-A1.xml
  *   - {coursecode}.xml     e.g., ASE A1.xml (spaces replaced with _)
  */
-class questionbank_builder {
+class questionbank_builder
+{
 
     /**
      * Build question categories and import XML for a given course.
      *
-     * @param int    $courseid
-     * @param string $coursecode     Human-readable code, e.g. "ASE A1".
-     * @param string $courseshortname Shortname, e.g. "ASE-A1".
+     * @param  int    $courseid
+     * @param  string $coursecode      Human-readable code, e.g. "ASE A1".
+     * @param  string $courseshortname Shortname, e.g. "ASE-A1".
      * @return void
      */
-    public function build_for_course(int $courseid, string $coursecode, string $courseshortname): void {
+    public function build_for_course(int $courseid, string $coursecode, string $courseshortname): void
+    {
         global $CFG, $DB;
 
         $datadir = $CFG->dirroot . '/local/ase_builder/data/questionbank';
@@ -46,18 +48,20 @@ class questionbank_builder {
             return;
         }
 
-        require_once($CFG->dirroot . '/question/editlib.php');
-        require_once($CFG->dirroot . '/question/format.php');
-        require_once($CFG->dirroot . '/question/format/xml/format.php');
+        include_once $CFG->dirroot . '/question/editlib.php';
+        include_once $CFG->dirroot . '/question/format.php';
+        include_once $CFG->dirroot . '/question/format/xml/format.php';
 
         $context = \context_course::instance($courseid);
 
         // Find or create a question category for this course.
         $catname = $courseshortname . ' Question Bank';
-        $category = $DB->get_record('question_categories', [
+        $category = $DB->get_record(
+            'question_categories', [
             'name'      => $catname,
             'contextid' => $context->id,
-        ]);
+            ]
+        );
 
         if (!$category) {
             $category = (object)[
