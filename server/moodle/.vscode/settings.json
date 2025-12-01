@@ -1,5 +1,0 @@
-{
-  "phpcs.executablePath": "D:\\Moodle\\server\\moodle\\tools\\phpcs.bat",
-  "php.validate.executablePath": "C:\\php\\php.exe",
-  "phpcs.standard": "PSR12"
-}

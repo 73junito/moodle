@@ -38,6 +38,3 @@ server/mysql/
 server/php/
 server/apache/logs/
 
-# Tools (local developer utilities) - do not commit
-server/moodle/tools/
-

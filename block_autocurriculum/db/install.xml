@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<XMLDB PATH="blocks/autocurriculum/db" VERSION="2025112700" COMMENT="XMLDB file for Moodle blocks/autocurriculum plugin"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
->
-  <TABLES>
-  </TABLES>
-</XMLDB>
