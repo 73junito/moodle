@@ -1,0 +1,12 @@
+{
+  "enableWebhook": false,
+  "webhookUrl": "",
+  "enableEmail": false,
+  "smtpServer": "",
+  "smtpPort": 25,
+  "useSsl": false,
+  "from": "moodle@example.local",
+  "to": "ops@example.local",
+  "username": "",
+  "password": ""
+}
