@@ -1,0 +1,16 @@
+<AppLockerPolicy Version="1">
+  <RuleCollection Type="0" EnforcementMode="AuditOnly">
+    <FilePathRule Id="00ad8abe-5ed1-4af2-8294-f8cad809402a" Name="Auto-generated" Description="Auto-generated" UserOrGroupSid="S-1-1-0" Action="0">
+      <Conditions>
+        <FilePathCondition Path="%userprofile%\\*" />
+      </Conditions>
+    </FilePathRule>
+  </RuleCollection>
+  <RuleCollection Type="FilePath" EnforcementMode="AuditOnly">
+    <FilePathRule Id="c87546a9-c7b2-4295-bcf0-9d30b43063bd" Name="Auto-generated" Description="Auto-generated" UserOrGroupSid="S-1-1-0" Action="Allow">
+      <Conditions>
+        <FilePathCondition Path="%USERPROFILE%\*" />
+      </Conditions>
+    </FilePathRule>
+  </RuleCollection>
+</AppLockerPolicy>

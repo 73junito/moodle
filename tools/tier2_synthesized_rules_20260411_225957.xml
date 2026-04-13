@@ -1,0 +1,29 @@
+<AppLockerPolicy>
+  <RuleCollection Type="Exe" EnforcementMode="Audit">
+    <FilePathRule Id="56f5d853-30e2-46c9-9116-2adc224af133" Name="DeveloperDomain - gitkraken" UserOrGroupSid="S-1-1-0" Action="Allow">
+      <Conditions>
+        <FilePathCondition Path="%LOCALAPPDATA%\GitKrakenCLI\GK.exe" />
+      </Conditions>
+    </FilePathRule>
+    <FilePathRule Id="f34ea4fc-72a6-41f1-8ea7-361d290028d0" Name="DeveloperDomain - ollama" UserOrGroupSid="S-1-1-0" Action="Allow">
+      <Conditions>
+        <FilePathCondition Path="%LOCALAPPDATA%\Programs\Ollama\ollama.exe" />
+      </Conditions>
+    </FilePathRule>
+    <FilePathRule Id="93d6ef72-aeea-4945-af67-3768a955da86" Name="DeveloperDomain - python" UserOrGroupSid="S-1-1-0" Action="Allow">
+      <Conditions>
+        <FilePathCondition Path="%LOCALAPPDATA%\Programs\Python\Python*\python.exe" />
+      </Conditions>
+    </FilePathRule>
+    <FilePathRule Id="a723142f-a986-4567-9e6a-d6c7c8e1b753" Name="DeveloperDomain - python" UserOrGroupSid="S-1-1-0" Action="Allow">
+      <Conditions>
+        <FilePathCondition Path="%USERPROFILE%\miniconda3\python.exe" />
+      </Conditions>
+    </FilePathRule>
+    <FilePathRule Id="e2ca459b-e195-4c5a-a74e-b6780cd2efad" Name="DeveloperDomain - python" UserOrGroupSid="S-1-1-0" Action="Allow">
+      <Conditions>
+        <FilePathCondition Path="C:\\Python*\\python.exe" />
+      </Conditions>
+    </FilePathRule>
+  </RuleCollection>
+</AppLockerPolicy>

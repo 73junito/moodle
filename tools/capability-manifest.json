@@ -1,0 +1,183 @@
+{
+    "generatedAt":  "2026-04-12T06:46:05Z",
+    "generator":  "tools/manifest-generator.ps1",
+    "summary":  {
+                    "repoPath":  "G:\\moodle",
+                    "totalFilesScanned":  29555,
+                    "totalSizeBytes":  59394081258,
+                    "categories":  5,
+                    "hasCI":  true,
+                    "hasAppLocker":  true,
+                    "notes":  "Regenerate to refresh counts, functions, and risk signals."
+                },
+    "categories":  [
+                       {
+                           "name":  "AppLocker Tooling",
+                           "description":  "Core AppLocker IR and compiler used to parse, synthesize and emit AppLocker policies.",
+                           "fileCount":  22,
+                           "totalBytes":  62912,
+                           "representativeFiles":  [
+                                                       "tools/AppLocker.PolicyCompiler.psm1",
+                                                       "tools/AppLocker.PolicyIR.ps1",
+                                                       "tools/applocker_sim_report_20260411_224609.txt",
+                                                       "tools/applocker_sim_report_20260411_224857.txt",
+                                                       "tools/applocker_sim_report_20260411_225236.txt",
+                                                       "tools/applocker_sim_report_20260411_225558.txt",
+                                                       "tools/applocker_sim_report_20260411_225957.txt",
+                                                       "tools/applocker_sim_report_20260411_230237.txt",
+                                                       "tools/applocker_sim_report_20260411_230302.txt",
+                                                       "tools/applocker_sim_report_20260411_230325.txt"
+                                                   ]
+                       },
+                       {
+                           "name":  "Tests \u0026 CI",
+                           "description":  "Pester tests, test fixtures and CI workflow for enforcing the IR contract and determinism.",
+                           "fileCount":  11,
+                           "totalBytes":  25700,
+                           "representativeFiles":  [
+                                                       ".github/workflows/close-pull-requests.yml",
+                                                       ".github/workflows/config-template.php",
+                                                       ".github/workflows/onebyone.yml",
+                                                       ".github/workflows/pester.yml",
+                                                       ".github/workflows/push.yml",
+                                                       ".github/workflows/web-installer-test.yml",
+                                                       ".github/workflows/windows.yml",
+                                                       "tools/tests/pester-results.xml",
+                                                       "tools/tests/PolicyCompiler.Tests.ps1",
+                                                       "tools/tests/sample_inspect.json"
+                                                   ]
+                       },
+                       {
+                           "name":  "Runs \u0026 Reports",
+                           "description":  "Saved run outputs, synthesized tier2 rules and AppLocker simulation reports used for triage.",
+                           "fileCount":  20,
+                           "totalBytes":  45201,
+                           "representativeFiles":  [
+                                                       "tools/applocker_sim_report_20260411_224609.txt",
+                                                       "tools/applocker_sim_report_20260411_224857.txt",
+                                                       "tools/applocker_sim_report_20260411_225236.txt",
+                                                       "tools/applocker_sim_report_20260411_225558.txt",
+                                                       "tools/applocker_sim_report_20260411_225957.txt",
+                                                       "tools/applocker_sim_report_20260411_230237.txt",
+                                                       "tools/applocker_sim_report_20260411_230302.txt",
+                                                       "tools/applocker_sim_report_20260411_230325.txt",
+                                                       "tools/applocker_sim_report_20260411_230351.txt",
+                                                       "tools/applocker_sim_report_verify_ir_emit.txt"
+                                                   ]
+                       },
+                       {
+                           "name":  "Admin Automation",
+                           "description":  "Admin CLI scripts and helpers relevant to safe auditing and maintenance (non-AppLocker).",
+                           "fileCount":  31,
+                           "totalBytes":  180496,
+                           "representativeFiles":  [
+                                                       "admin/cli/adhoc_task.php",
+                                                       "admin/cli/alternative_component_cache.php",
+                                                       "admin/cli/automated_backups.php",
+                                                       "admin/cli/backup.php",
+                                                       "admin/cli/build_theme_css.php",
+                                                       "admin/cli/cfg.php",
+                                                       "admin/cli/check_database_schema.php",
+                                                       "admin/cli/checks.php",
+                                                       "admin/cli/cron.php",
+                                                       "admin/cli/dashboard_reset.php"
+                                                   ]
+                       },
+                       {
+                           "name":  "Docs \u0026 Fixtures",
+                           "description":  "Documentation, sample fixtures and developer helpers referenced by the toolchain.",
+                           "fileCount":  0,
+                           "totalBytes":  null,
+                           "representativeFiles":  null
+                       }
+                   ],
+    "capabilities":  {
+                         "functions":  [
+                                           {
+                                               "file":  "tools/AppLocker.PolicyCompiler.psm1",
+                                               "function":  "Parse-AppLockerPolicyXml"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyCompiler.psm1",
+                                               "function":  "Simulate-Execution"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyCompiler.psm1",
+                                               "function":  "Diff-Policies"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyCompiler.psm1",
+                                               "function":  "Evaluate-Workload"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyCompiler.psm1",
+                                               "function":  "Get-TrustTier"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyCompiler.psm1",
+                                               "function":  "Synthesize-DeveloperDomainRules"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyCompiler.psm1",
+                                               "function":  "Emit-PolicyIRToXml"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyCompiler.psm1",
+                                               "function":  "Compare-AppLockerIR"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyCompiler.psm1",
+                                               "function":  "NormalizeRules"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyCompiler.psm1",
+                                               "function":  "Assert-AppLockerIR"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyIR.ps1",
+                                               "function":  "Normalize-ConditionPath"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyIR.ps1",
+                                               "function":  "Canonicalize-Publisher"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyIR.ps1",
+                                               "function":  "Get-ConditionHash"
+                                           },
+                                           {
+                                               "file":  "tools/AppLocker.PolicyIR.ps1",
+                                               "function":  "Validate-PolicyIR"
+                                           },
+                                           {
+                                               "file":  "tools/manifest-generator.ps1",
+                                               "function":  "RelPath"
+                                           },
+                                           {
+                                               "file":  "tools/manifest-generator.ps1",
+                                               "function":  "AddCategory"
+                                           },
+                                           {
+                                               "file":  "tools/run_policy_compiler.ps1",
+                                               "function":  "Emit-PolicyIRToFile"
+                                           }
+                                       ],
+                         "applocker":  {
+                                           "ruleFileCount":  10,
+                                           "totalRules":  0,
+                                           "ruleTypes":  {
+
+                                                         }
+                                       },
+                         "ci":  {
+                                    "hasWorkflow":  true,
+                                    "testFileCount":  4
+                                },
+                         "riskSignals":  [
+                                             {
+                                                 "file":  "tools/manifest-generator.ps1",
+                                                 "matches":  "$riskyPatterns = \u0027Invoke-Expression|iex\\s|Start-Process\\s|Invoke-Command\\s|System\\.Diagnostics\\.Process|\\bexec\\(|shell_exec\\(|popen\\(|passthru\\(|system\\(\u0027"
+                                             }
+                                         ]
+                     }
+}

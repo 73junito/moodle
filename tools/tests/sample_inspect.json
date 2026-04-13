@@ -1,0 +1,27 @@
+[
+  {
+    "value": "33333333-3333-3333-3333-333333333333",
+    "Guid": "33333333-3333-3333-3333-333333333333"
+  },
+  {
+    "Rules": [
+      {
+        "RuleId": "33333333-3333-3333-3333-333333333333",
+        "RuleType": 0,
+        "Action": 0,
+        "Tier": 2,
+        "Condition": {
+          "Path": "%programfiles%\\\\inspect\\\\*",
+          "Publisher": null,
+          "ProductName": null,
+          "BinaryName": null,
+          "Hash": null
+        },
+        "Scope": "All",
+        "Description": "True",
+        "Source": 0
+      }
+    ],
+    "PolicyVersion": "IR.v1"
+  }
+]

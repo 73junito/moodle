@@ -1,0 +1,15 @@
+<!-- DEPRECATED: replaced by tools/ci/ci_ollama_run.ps1 -->
+<Configuration>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>G:\\moodle</HostFolder>
+      <ReadOnly>false</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>powershell -NoProfile -ExecutionPolicy Bypass -File "C:\\Users\\WDAGUtilityAccount\\Desktop\\host_moodle\\sandbox_collect.ps1"</Command>
+  </LogonCommand>
+  <Networking>Disable</Networking>
+  <AudioInput>Disable</AudioInput>
+  <PrinterRedirection>Disable</PrinterRedirection>
+</Configuration>

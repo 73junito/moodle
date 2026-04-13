@@ -1,0 +1,17 @@
+<!-- DEPRECATED: replaced by tools/ci/ci_ollama_run.ps1 -->
+<Configuration>
+  <VGpu>Disable</VGpu>
+  <Networking>Enable</Networking>
+
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>C:\Temp\Wdac</HostFolder>
+      <ReadOnly>false</ReadOnly>
+      <ContainerFolder>C:\SandboxShare</ContainerFolder>
+    </MappedFolder>
+  </MappedFolders>
+
+  <LogonCommand>
+    <Command>powershell.exe -NoExit -ExecutionPolicy Bypass -File "C:\SandboxShare\ollama-sandbox-runner.ps1"</Command>
+  </LogonCommand>
+</Configuration>

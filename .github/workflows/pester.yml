@@ -1,0 +1,50 @@
+name: Pester Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate no pwsh -Command usage
+        shell: pwsh
+        run: pwsh -NoProfile -File tools/ci/ci_validate_no_pwsh_command.ps1 -Root .
+
+      - name: Validate no implicit report paths
+        shell: pwsh
+        run: pwsh -NoProfile -File tools/ci/ci_validate_no_implicit_paths.ps1 -Root .
+
+      - name: Run Pester + export results
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $modulePath = Join-Path $PWD 'tools\AppLocker.PolicyCompiler.psm1'
+          $testPath   = Join-Path $PWD 'tools\tests\PolicyCompiler.Tests.ps1'
+
+          Import-Module $modulePath -Force
+
+          # Run Pester once and persist results
+          $result = Invoke-Pester -Path $testPath -Passthru -Output Detailed
+
+          $result | ConvertTo-Json -Depth 10 | Out-File pester-results.json -Encoding utf8
+
+          Write-Host "Pester Summary: $($result.Summary)"
+
+          if ($result.FailedCount -gt 0) {
+            Write-Host "FAILED: $($result.FailedCount) tests"
+            exit 1
+          }
+
+      - name: Upload Pester artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pester-results
+          path: pester-results.json

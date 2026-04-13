@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="4" errors="0" failures="1" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2026-04-12" time="00:13:50">
+  <environment user="rod63" machine-name="JUNITO" cwd="G:\moodle" user-domain="JUNITO" platform="Microsoft Windows 11 Pro|C:\WINDOWS|\Device\Harddisk2\Partition3" nunit-version="2.5.8.0" os-version="10.0.26200" clr-version="4.0.30319.42000" />
+  <culture-info current-culture="en-US" current-uiculture="en-US" />
+  <test-suite type="Powershell" name="Pester" executed="True" result="Failure" success="False" time="0.704" asserts="0">
+    <results>
+      <test-suite type="TestFixture" name="AppLocker Policy Compiler - Parse/Validate/Emit" executed="True" result="Failure" success="False" time="0.704" asserts="0" description="AppLocker Policy Compiler - Parse/Validate/Emit">
+        <results>
+          <test-case description="Parse -&gt; IR shape test" name="AppLocker Policy Compiler - Parse/Validate/Emit.Parse -&gt; IR shape test" time="0.4595" asserts="0" success="False" result="Failure" executed="True">
+            <failure>
+              <message>Rule missing identifying properties (Id/RuleId/Name)</message>
+              <stack-trace>at line: 24 in G:\moodle\tools\tests\PolicyCompiler.Tests.ps1</stack-trace>
+            </failure>
+          </test-case>
+          <test-case description="Validate-PolicyIR fails cleanly on malformed IR" name="AppLocker Policy Compiler - Parse/Validate/Emit.Validate-PolicyIR fails cleanly on malformed IR" time="0.1298" asserts="0" success="True" result="Success" executed="True" />
+          <test-case description="Emit round-trip test (IR -&gt; XML -&gt; parse)" name="AppLocker Policy Compiler - Parse/Validate/Emit.Emit round-trip test (IR -&gt; XML -&gt; parse)" time="0.1007" asserts="0" success="True" result="Success" executed="True" />
+          <test-case description="Diff stability test" name="AppLocker Policy Compiler - Parse/Validate/Emit.Diff stability test" time="0.014" asserts="0" success="True" result="Success" executed="True" />
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>

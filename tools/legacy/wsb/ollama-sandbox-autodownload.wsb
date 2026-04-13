@@ -1,0 +1,16 @@
+<!-- DEPRECATED: replaced by tools/ci/ci_ollama_autodownload.ps1 -->
+<Configuration>
+  <VGpu>Disable</VGpu>
+  <Networking>Enable</Networking>
+
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>G:\moodle</HostFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+
+  <LogonCommand>
+    <Command>powershell.exe -NoExit -ExecutionPolicy Bypass -Command "Set-StrictMode -Off; $expected='D350DD1C886759DE628E80D1855C2F536A00B5D85755896EFE02BFE7811A6BF8'; $install='C:\Users\WDAGUtilityAccount\Desktop\install.ps1'; $sha='C:\Users\WDAGUtilityAccount\Desktop\sha256sum.txt'; Invoke-WebRequest -Uri 'https://github.com/ollama/ollama/releases/download/v0.20.4/install.ps1' -OutFile $install; Invoke-WebRequest -Uri 'https://github.com/ollama/ollama/releases/download/v0.20.4/sha256sum.txt' -OutFile $sha; $h=(Get-FileHash $install -Algorithm SHA256).Hash.ToUpper(); Write-Host 'Computed SHA256:' $h; Write-Host 'Expected SHA256:' $expected; if($h -eq $expected){ $choice=Read-Host 'Hashes match — run installer? (Y/N)'; if($choice -eq 'Y'){ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass; &amp; $install } else { Write-Host 'Cancelled by user.' } } else { Write-Host 'Hash mismatch — aborting. File saved to' $install }"</Command>
+  </LogonCommand>
+</Configuration>

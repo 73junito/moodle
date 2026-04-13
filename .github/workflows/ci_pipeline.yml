@@ -1,0 +1,72 @@
+name: Self-Heal Validation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  self-heal-validation:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up PowerShell
+        uses: actions/setup-pwsh@v2
+        with:
+          version: '7.x'
+
+      - name: Validate PowerShell execution model (no -Command usage)
+        shell: pwsh
+        run: pwsh -NoProfile -File tools/ci/ci_validate_no_pwsh_command.ps1 -Root .
+
+      - name: Validate no implicit report paths
+        shell: pwsh
+        run: pwsh -NoProfile -File tools/ci/ci_validate_no_implicit_paths.ps1 -Root .
+
+      - name: Setup Ollama (verified download)
+        shell: pwsh
+        run: pwsh -NoProfile -File tools/ci/ci_ollama_writable.ps1 -RunInstaller:$false
+
+      - name: Run deterministic CI runner
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -File tools/ci_compare_self_heal.ps1 `
+            -PolicyXml tools/tests/sample_inspect.xml `
+            -SimulationReport tools/runs/positive_sim.json `
+            -OutDir tools/runs `
+            -FailOnDivergence:$false `
+            -RunId "${{ github.run_id }}-${{ github.sha }}"
+
+      - name: Upload resilient/strict reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: ir-validation-reports
+          path: |
+            tools/runs/*/resilient/ir_validation_report.json
+            tools/runs/*/strict/ir_validation_report.json
+
+      - name: Upload compare artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ir-validation-compare
+          path: tools/runs/*/ir_validation_compare.json
+
+      - name: Upload run metadata
+        uses: actions/upload-artifact@v3
+        with:
+          name: ir-validation-metadata
+          path: tools/runs/*/metadata.json
+
+      - name: Print reports (debug)
+        shell: pwsh
+        run: |
+          Write-Host '--- Resilient reports ---'
+          Get-ChildItem -Path tools/runs -Recurse -Filter ir_validation_report.json | ForEach-Object { Write-Host "-- $_"; Get-Content $_ -Raw }
+          Write-Host '--- Compare artifacts ---'
+          Get-ChildItem -Path tools/runs -Recurse -Filter ir_validation_compare.json | ForEach-Object { Write-Host "-- $_"; Get-Content $_ -Raw }
