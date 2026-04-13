@@ -18,12 +18,13 @@ exported-sandbox-artifacts/
 *.cache
 
 # === runs ===
-tools/runs/
+# Ignore generated outputs
+tools/runs/output/
 **/runs/
 
-# Allow the deterministic CI simulation file so workflows can run
-!/tools/runs/
-!/tools/runs/positive_sim.json
+# Allow committed inputs/fixtures
+!/tools/runs/input/
+!/tools/runs/input/*
 
 # local OS VCS/temp
 .DS_Store
