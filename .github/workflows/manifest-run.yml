@@ -1,0 +1,416 @@
+name: Manifest-driven Run (production)
+
+on:
+  push:
+    paths:
+      - '**/manifest.json'
+      - 'tools/**/manifest.json'
+  pull_request:
+    paths:
+      - '**/manifest.json'
+      - 'tools/**/manifest.json'
+  workflow_dispatch: {}
+
+env:
+  # default retention values (days) can be overridden via workflow inputs or secrets later
+  ARTIFACT_RETENTION_SUCCESS: 3
+  ARTIFACT_RETENTION_FAILURE: 14
+  PSSA_MODE: baseline
+  MANIFEST_VALIDATION_MODE: ${{ github.event_name == 'pull_request' && 'baseline' || 'strict' }}
+
+jobs:
+  discover-manifests:
+    name: discover-manifests
+    runs-on: ubuntu-latest
+    outputs:
+      manifests: ${{ steps.set_manifests.outputs.manifests }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find manifests and emit safe matrix
+        id: set_manifests
+        run: |
+          pwsh -NoProfile -Command {
+            $ErrorActionPreference = 'Stop'
+            $items = @()
+            $files = Get-ChildItem -Path . -Recurse -Filter manifest.json -File -ErrorAction SilentlyContinue
+
+            # compute CI fingerprint to invalidate caches when CI changes
+            $ciFiles = @('tools/ci/ci_validate_manifest.ps1','tools/ci/run.ps1')
+            $ciContent = ''
+            foreach ($c in $ciFiles) { if (Test-Path $c) { $ciContent += (Get-Content $c -Raw) } }
+            $ciHash = ''
+            if ($ciContent -ne '') { $ciHash = (Get-FileHash -InputStream ([System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($ciContent))) -Algorithm SHA256).Hash.ToLower() }
+
+            foreach ($f in $files) {
+              $path = $f.FullName
+              $manifestDir = Split-Path -Parent $path
+              $runId = $null
+              try {
+                $json = Get-Content $path -Raw | ConvertFrom-Json
+                if ($json -and $json.runId) { $runId = [string]$json.runId }
+              } catch { $json = $null }
+              if (-not $runId) { $runId = Split-Path -Leaf $manifestDir }
+
+              # compute manifest hash base: manifest content + referenced inputs + ciHash
+              $manifestContent = Get-Content $path -Raw
+              $inputsContent = ''
+              if ($json -and $null -ne $json.inputs) {
+                foreach ($inp in $json.inputs) {
+                  $p = Join-Path $manifestDir $inp
+                  if (Test-Path $p) { $inputsContent += (Get-Content $p -Raw) }
+                }
+              }
+              $hashBase = $manifestContent + $inputsContent + $ciHash
+              $hash = (Get-FileHash -InputStream ([System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($hashBase))) -Algorithm SHA256).Hash.ToLower()
+
+              # ensure safe string types for matrix
+              $items += [pscustomobject]@{ path = [string]$path; runId = [string]$runId; hash = [string]$hash }
+            }
+
+            if ($items.Count -eq 0) { $json = '[]' } else { $json = $items | ConvertTo-Json -Depth 10 -Compress }
+            Write-Host "Found manifests: $json"
+            "manifests=$json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          }
+
+    lint-psa:
+      name: PSScriptAnalyzer
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Install PSScriptAnalyzer
+          run: |
+            pwsh -NoProfile -Command {
+              Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -AllowClobber
+            }
+
+        - name: Run PSScriptAnalyzer (CI mode respects PSSA_MODE)
+          id: pssa
+          run: |
+            pwsh -NoProfile -Command {
+              $ErrorActionPreference = 'Stop'
+              $outdir = '.github/artifacts'
+              if (-not (Test-Path $outdir)) { New-Item -ItemType Directory -Path $outdir -Force | Out-Null }
+              $res = Invoke-ScriptAnalyzer -Path 'tools/ci' -Recurse -ErrorAction SilentlyContinue
+              $res | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $outdir 'pssa-results.json') -Encoding UTF8
+              $errCount = ($res | Where-Object { $_.Severity -in @('Error','Critical') }).Count
+              Write-Host "PSScriptAnalyzer found $errCount errors"
+              if ($env:PSSA_MODE -eq 'strict' -and $errCount -gt 0) { Write-Host 'Failing due to PSScriptAnalyzer errors'; exit 1 }
+              if ($env:PSSA_MODE -ne 'strict' -and $errCount -gt 0) { Write-Host 'PSScriptAnalyzer errors found (baseline mode)'; }
+            }
+
+        - name: Upload PSScriptAnalyzer results
+          uses: actions/upload-artifact@v4
+          with:
+            name: pssa-results
+            path: .github/artifacts/pssa-results.json
+
+
+  validate-manifests:
+    name: validate-manifests
+    needs: [discover-manifests, lint-psa]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.discover-manifests.outputs.manifests) }}
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore manifest cache (per-run)
+        id: manifest_cache
+        uses: actions/cache@v4
+        with:
+          path: .github/cache_manifest/${{ matrix.runId }}
+          key: manifest-cache-${{ matrix.runId }}-${{ matrix.hash }}
+
+      - name: Validate manifest (enforce run dir)
+        id: validate
+        run: |
+          pwsh -NoProfile -Command {
+            $ErrorActionPreference = 'Stop'
+            $m = '${{ matrix.path }}'
+            $runId = '${{ matrix.runId }}'
+            $staging = Join-Path (Get-Location).Path ".github/artifacts/$runId"
+            if (-not (Test-Path $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
+
+            $mode = '${{ env.MANIFEST_VALIDATION_MODE }}'
+            Write-Host "[validate] Mode: $mode"
+            $report = [ordered]@{ runId = $runId; manifest = $m; timestamp = (Get-Date).ToString('o'); status = 'ok'; errors = @() }
+            $failed = $false
+            try {
+              pwsh -NoProfile -File "tools/ci/ci_validate_manifest.ps1" -ManifestPath $m -EnforceRunDir
+            } catch {
+              $msg = $_.Exception.Message -replace "`n"," " -replace "`r"," "
+              # always emit an annotation so issues are visible in PRs even in baseline mode
+              Write-Host "::error title=Manifest Validation Failed file=$m::${msg}"
+              $report.status = 'failed'
+              $report.errors += $msg
+              $failed = $true
+            }
+            $report | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $staging 'validation-report.json') -Encoding UTF8
+            # write a minimal metadata to preserve artifact contract
+            $meta = [ordered]@{ runId = $runId; manifest = $m; timestamp = (Get-Date).ToString('o'); status = $report.status }
+            $meta | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $staging 'metadata.json') -Encoding UTF8
+
+            # mark cache-hit if present so downstream can act accordingly
+            if ('${{ steps.manifest_cache.outputs.cache-hit }}' -eq 'true') { Set-Content -Path (Join-Path $staging 'skipped.flag') -Value 'cache-hit' -Encoding UTF8 }
+
+            # Fail only when strict mode is configured. Baseline mode reports but does not block CI.
+            if ($failed -and $mode -eq 'strict') {
+              Write-Host "Failing due to strict manifest validation mode"
+              exit 1
+            } else {
+              if ($failed) { Write-Host "Manifest validation failed (baseline mode): issues recorded in validation-report.json" }
+              exit 0
+            }
+          }
+
+      - name: Upload PR validation report
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-validation-report-${{ matrix.runId }}
+          path: .github/artifacts/${{ matrix.runId }}/**
+
+  run-manifests:
+    name: run-manifest-${{ matrix.runId }}
+    needs: validate-manifests
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.discover-manifests.outputs.manifests) }}
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+      issues: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore manifest cache (per-run)
+        id: manifest_cache_run
+        uses: actions/cache@v4
+        with:
+          path: .github/cache_manifest/${{ matrix.runId }}
+          key: manifest-cache-${{ matrix.runId }}-${{ matrix.hash }}
+
+      - name: Ensure artifact staging exists
+        run: |
+          pwsh -NoProfile -Command {
+            $runId = '${{ matrix.runId }}'
+            $staging = Join-Path (Get-Location).Path ".github/artifacts/$runId"
+            if (-not (Test-Path $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
+          }
+
+      - name: Run manifest (unless cached)
+        id: run_manifest
+        if: steps.manifest_cache_run.outputs.cache-hit != 'true'
+        run: |
+          pwsh -NoProfile -Command {
+            $ErrorActionPreference = 'Stop'
+            $m = '${{ matrix.path }}'
+            $runId = '${{ matrix.runId }}'
+            $manifestDir = Split-Path -Parent $m
+            Write-Host "=== Running manifest: $m ==="
+            try {
+              pwsh -NoProfile -File "tools/ci/run.ps1" -ManifestPath $m -EnforceRunDir
+            } catch {
+              $msg = $_.Exception.Message -replace "`n"," " -replace "\r"," "
+              Write-Host "::error title=Manifest Execution Failed file=$m::${msg}"
+              exit 1
+            }
+          }
+
+      - name: Collect run artifacts and step logs
+        if: always()
+        run: |
+          pwsh -NoProfile -Command {
+            $ErrorActionPreference = 'Stop'
+            $m = '${{ matrix.path }}'
+            $runId = '${{ matrix.runId }}'
+            $manifestDir = Split-Path -Parent $m
+            $staging = Join-Path (Get-Location).Path ".github/artifacts/$runId"
+            if (-not (Test-Path $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
+
+            # copy declared outputs
+            $json = Get-Content $m -Raw | ConvertFrom-Json
+            if ($null -ne $json.outputs -and $json.outputs.Count -gt 0) {
+              foreach ($out in $json.outputs) {
+                $p = Join-Path $manifestDir $out
+                if (Test-Path $p) {
+                  $relative = $p.Substring((Resolve-Path $manifestDir).Path.Length).TrimStart([IO.Path]::DirectorySeparatorChar)
+                  $dest = Join-Path $staging $relative
+                  $destDir = Split-Path -Parent $dest
+                  if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
+                  Copy-Item -Path $p -Destination $dest -Force
+                }
+              }
+            }
+
+            # copy metadata + validation report and steps logs
+            $meta = Join-Path $manifestDir 'metadata.json'
+            if (Test-Path $meta) { Copy-Item -Path $meta -Destination (Join-Path $staging 'metadata.json') -Force }
+            $vre = Join-Path $manifestDir 'validation-report.json'
+            if (Test-Path $vre) { Copy-Item -Path $vre -Destination (Join-Path $staging 'validation-report.json') -Force }
+            $stepsDir = Join-Path $manifestDir 'steps'
+            if (Test-Path $stepsDir) { Copy-Item -Path (Join-Path $stepsDir '*') -Destination (Join-Path $staging 'steps') -Recurse -Force -ErrorAction SilentlyContinue }
+
+            # produce run-level status if missing
+            $destMeta = Join-Path $staging 'metadata.json'
+            if (-not (Test-Path $destMeta)) {
+              $status = if ('${{ steps.run_manifest.outcome }}' -eq 'success') { 'success' } else { 'skipped' }
+              $mm = [ordered]@{ runId = $runId; manifest = $m; timestamp = (Get-Date).ToString('o'); status = $status }
+              $mm | ConvertTo-Json -Depth 5 | Set-Content -Path $destMeta -Encoding UTF8
+            }
+
+            # create a simple status file for aggregator
+            $statusFile = Join-Path $staging 'status.txt'
+            Set-Content -Path $statusFile -Value ((Get-Content $destMeta -Raw | ConvertFrom-Json).status) -Encoding UTF8
+          }
+
+      - name: Upload run artifacts (success)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-${{ github.run_id }}-${{ matrix.runId }}-success
+          path: .github/artifacts/${{ matrix.runId }}/**
+          retention-days: ${{ env.ARTIFACT_RETENTION_SUCCESS }}
+
+      - name: Upload run artifacts (failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-${{ github.run_id }}-${{ matrix.runId }}-failed
+          path: .github/artifacts/${{ matrix.runId }}/**
+          retention-days: ${{ env.ARTIFACT_RETENTION_FAILURE }}
+
+      - name: Save manifest cache
+        if: steps.manifest_cache_run.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: .github/cache_manifest/${{ matrix.runId }}
+          key: manifest-cache-${{ matrix.runId }}-${{ matrix.hash }}
+
+  aggregate-results:
+    name: aggregate-results
+    needs: run-manifests
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Aggregate metadata and write step summary
+        id: aggregate
+        run: |
+          pwsh -NoProfile -File tools/ci/aggregate-report.ps1 -ArtifactsDir artifacts -OutputJson manifest-run-summary.json -BaselinePath .github/cache_manifest/pssa-baseline.json
+
+      - name: Optionally write baseline (only on dispatch or main)
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+        run: |
+          pwsh -NoProfile -File tools/ci/aggregate-report.ps1 -ArtifactsDir artifacts -OutputJson manifest-run-summary.json -BaselinePath .github/cache_manifest/pssa-baseline.json -WriteBaseline
+
+      - name: Fail if new PSScriptAnalyzer findings
+        id: fail_on_new_pssa
+        run: |
+          pwsh -NoProfile -Command {
+            $ErrorActionPreference = 'Stop'
+            $path = 'manifest-run-summary.json'
+            if (-not (Test-Path $path)) { Write-Host 'No summary produced; skipping PSSA gate'; exit 0 }
+            $s = Get-Content $path -Raw | ConvertFrom-Json
+            $new = 0
+            if ($s.pssa -and $s.pssa.newFindings) { $new = [int]$s.pssa.newFindings }
+            Write-Host "PSSA new findings: $new"
+            if ($new -gt 0) { Write-Host 'Failing job due to new PSScriptAnalyzer findings'; exit 1 }
+          }
+
+      - name: Comment PR with summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = 'manifest-run-summary.json';
+            if (!fs.existsSync(path)) return;
+            const summary = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const marker = '<!-- manifest-run-summary -->';
+
+            const pssa = summary.pssa || {};
+            const newF = pssa.newFindings || 0;
+            const existingF = pssa.existingFindings || 0;
+            const resolvedF = pssa.resolvedFindings || 0;
+            const topFiles = pssa.topFiles || [];
+
+            const artifactsUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/suites/${process.env.GITHUB_RUN_ID}/artifacts`;
+
+            let topFilesMd = 'None';
+            if (topFiles.length > 0) {
+              topFilesMd = topFiles.slice(0,3).map(f => `- ${f.file} (${f.count})`).join('\n');
+            }
+
+            const bodyContent = `### PSScriptAnalyzer Summary\n\n- 🆕 New: ${newF}\n- ⚠️ Existing: ${existingF}\n- ✅ Resolved: ${resolvedF}\n\nTop files:\n${topFilesMd}\n\nArtifacts: ${artifactsUrl}\n\n` +
+              `### Manifest Run Summary\n\n**${summary.passed}** passed / **${summary.failed}** failed\n\nFailed runs: ${summary.failedRuns && summary.failedRuns.length ? summary.failedRuns.join(', ') : 'none'}`;
+
+            const body = `${marker}\n${bodyContent}`;
+            const { data: comments } = await github.rest.issues.listComments({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, per_page: 100 });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });
+            }
+
+      - name: Annotate PR with new PSScriptAnalyzer findings
+        if: github.event_name == 'pull_request'
+        run: |
+          pwsh -NoProfile -Command {
+            $ErrorActionPreference = 'Stop'
+            $summaryPath = 'manifest-run-summary.json'
+            if (-not (Test-Path $summaryPath)) { Write-Host 'No manifest summary found; skipping annotations'; exit 0 }
+            $s = Get-Content $summaryPath -Raw | ConvertFrom-Json
+            if (-not $s.pssa -or -not $s.pssa.newSamples) { Write-Host 'No new PSSA findings'; exit 0 }
+
+            # build dedup key and cap
+            $max = 50
+            $seen = @{}
+            $count = 0
+            foreach ($f in $s.pssa.newSamples) {
+              if ($count -ge $max) { break }
+              $file = if ($f.ScriptName) { $f.ScriptName } elseif ($f.FileName) { $f.FileName } else { $null }
+              $line = if ($f.Line) { [int]$f.Line } else { 1 }
+              $rule = if ($f.RuleName) { $f.RuleName } elseif ($f.Rule) { $f.Rule } else { '' }
+              $msg = if ($f.Message) { ($f.Message -replace "`n"," " -replace "\r"," ").Trim() } else { '' }
+              if (-not $file) { continue }
+              $key = "$file|$rule|$msg"
+              if ($seen.ContainsKey($key)) { continue }
+              $seen[$key] = $true
+
+              # severity mapping
+              $sev = if ($f.Severity) { $f.Severity } else { 'Warning' }
+              if ($sev -in @('Information','Info')) { continue }
+              $ann = 'warning'
+              if ($sev -in @('Error','Critical')) { $ann = 'error' }
+
+              # emit GitHub annotation
+              Write-Host "::${ann} file=${file},line=${line},title=PSSA:${rule}::${msg}"
+              $count++
+            }
+            Write-Host "Emitted $count annotations (capped at $max)"
+          }
