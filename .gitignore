@@ -1,0 +1,26 @@
+# === block massive dirs ===
+sandbox_artifacts/
+installer_extracted/
+public/
+payload_out/
+exported-sandbox-artifacts/
+
+# === generic data ===
+*.csv
+*.tsv
+*.jsonl
+*.zip
+*.bin
+
+# === logs / temp ===
+*.log
+*.tmp
+*.cache
+
+# === runs ===
+tools/runs/
+**/runs/
+
+# local OS VCS/temp
+.DS_Store
+Thumbs.db
