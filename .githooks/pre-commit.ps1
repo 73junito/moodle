@@ -24,9 +24,10 @@ $violations = @()
 
 foreach ($file in $files) {
 
-    # Path-based blocking
+    # Path-based blocking (match on path segment boundaries to avoid false positives)
     foreach ($dir in $blockedDirs) {
-        if ($file -like "*$dir*") {
+        $pattern = "(^|[\\/])" + [regex]::Escape($dir) + "([\\/]|$)"
+        if ($file -match $pattern) {
             $violations += "Blocked directory path: $file"
             break
         }
