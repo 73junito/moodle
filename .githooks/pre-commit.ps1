@@ -10,6 +10,11 @@ $blockedDirs = @(
     "tools/runs"
 )
 
+# Explicit allow-list for config/fixture files under runs
+$allowedFiles = @(
+    "tools/runs/positive_sim.json"
+)
+
 $blockedExt = @(
     ".csv",
     ".zip",
@@ -26,9 +31,20 @@ foreach ($file in $files) {
 
     # Path-based blocking
     foreach ($dir in $blockedDirs) {
-        if ($file -like "*$dir*") {
-            $violations += "Blocked directory path: $file"
-            break
+        if ($dir -eq "tools/runs") {
+            # Allow specific fixtures (e.g. positive_sim.json) but block per-run outputs under tools/runs/<RunId>/...
+            if ($allowedFiles -contains $file) {
+                break
+            }
+            if ($file -like "tools/runs/*") {
+                $violations += "Blocked directory path: $file"
+                break
+            }
+        } else {
+            if ($file -like "*$dir*") {
+                $violations += "Blocked directory path: $file"
+                break
+            }
         }
     }
 

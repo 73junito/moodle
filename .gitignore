@@ -21,6 +21,10 @@ exported-sandbox-artifacts/
 tools/runs/
 **/runs/
 
+# Allow the deterministic CI simulation file so workflows can run
+!/tools/runs/
+!/tools/runs/positive_sim.json
+
 # local OS VCS/temp
 .DS_Store
 Thumbs.db
