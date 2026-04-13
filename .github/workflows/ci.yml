@@ -1,0 +1,16 @@
+name: CI Guards
+
+on:
+  workflow_dispatch:
+
+jobs:
+  guards:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run CI Guards
+        shell: pwsh -NoProfile -command ". '{0}'"
+        run: |
+          ./tools/ci/run_guards.ps1 -Root .
