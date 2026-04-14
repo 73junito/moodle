@@ -39,7 +39,7 @@ jobs:
     name: resolve-mode
     runs-on: ubuntu-latest
     outputs:
-      ci_mode: ci
+      ci_mode: ${{ steps.resolve.outputs.ci_mode }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,22 +51,20 @@ jobs:
 
       - name: CI-mode consistency check (non-blocking)
         id: ci_mode_check
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $ErrorActionPreference = 'Stop'
-            $ciPath = Join-Path $env:GITHUB_WORKSPACE 'ci-mode.json'
-            $ci = $null
-            if (Test-Path $ciPath) {
-              try { $ci = Get-Content $ciPath -Raw | ConvertFrom-Json -ErrorAction Stop } catch { $ci = $null }
-            }
-            $label1 = if ($ci -and $ci.Label) { $ci.Label } else { $null }
-            $label2 = if ($env:CI_MODE_LABEL) { $env:CI_MODE_LABEL } else { $null }
-            Write-Host "[ci-check] ci-mode.json label = $label1"
-            Write-Host "[ci-check] env label = $label2"
-            if ($label1 -and $label2 -and ($label1 -ne $label2)) {
-              Write-Host "::warning::CI mode mismatch between ci-mode.json and CI_MODE_LABEL"
-            }
-            exit 0
+          $ErrorActionPreference = 'Stop'
+          $ciPath = Join-Path $env:GITHUB_WORKSPACE 'ci-mode.json'
+          $ci = $null
+          if (Test-Path $ciPath) {
+            try { $ci = Get-Content $ciPath -Raw | ConvertFrom-Json -ErrorAction Stop } catch { $ci = $null }
+          }
+          $label1 = if ($ci -and $ci.Label) { $ci.Label } else { $null }
+          $label2 = if ($env:CI_MODE_LABEL) { $env:CI_MODE_LABEL } else { $null }
+          Write-Host "[ci-check] ci-mode.json label = $label1"
+          Write-Host "[ci-check] env label = $label2"
+          if ($label1 -and $label2 -and ($label1 -ne $label2)) {
+            Write-Host "::warning::CI mode mismatch between ci-mode.json and CI_MODE_LABEL"
           }
 
   discover-manifests:
@@ -125,6 +123,37 @@ jobs:
             "manifests=$json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           }
 
+  check-manifests:
+    name: check-manifests (hybrid)
+    needs: discover-manifests
+    runs-on: ubuntu-latest
+    outputs:
+      has_manifests: ${{ steps.check.outputs.has_manifests }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check manifest presence (hybrid mode)
+        id: check
+        run: |
+          pwsh -NoProfile -Command {
+            $m = '${{ needs.discover-manifests.outputs.manifests }}'
+            Write-Host "MANIFESTS=$m"
+            $has = 'false'
+            if ($m -ne '[]') { $has = 'true' }
+            if ($m -eq '[]') {
+              if ('${{ github.event_name }}' -eq 'pull_request') {
+                Write-Host "::warning::No manifests found (PR mode)"
+              } elseif ('${{ github.ref }}' -eq 'refs/heads/main') {
+                Write-Host "::error::No manifests found on main branch"
+                exit 1
+              } else {
+                Write-Host "No manifests found (non-main branch)"
+              }
+            }
+            "has_manifests=$has" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          }
+
   lint-psa:
     name: PSScriptAnalyzer
     runs-on: ubuntu-latest
@@ -132,11 +161,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache PowerShell modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/powershell/Modules
+          key: pwsh-modules-${{ runner.os }}-pssa-1
+
       - name: Install PSScriptAnalyzer
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -AllowClobber
+          $ErrorActionPreference = 'Stop'
+          # trust PSGallery if present
+          Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted -ErrorAction SilentlyContinue
+
+          # Ensure NuGet provider exists (common cause of Install-Module failures on fresh runners)
+          if (-not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) {
+            Install-PackageProvider -Name NuGet -Scope CurrentUser -Force
           }
+
+          # Install + verify
+          Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -AllowClobber -Repository PSGallery
+          Import-Module PSScriptAnalyzer -Force
+          Get-Module PSScriptAnalyzer -ListAvailable | Select-Object Name, Version, Path
 
       - name: Run PSScriptAnalyzer (CI mode respects PSSA_MODE)
         id: pssa
@@ -162,7 +208,8 @@ jobs:
 
   validate-manifests:
     name: validate-manifests
-    needs: [discover-manifests, lint-psa]
+    needs: [discover-manifests, lint-psa, check-manifests]
+    if: ${{ needs.check-manifests.outputs.has_manifests == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -235,8 +282,8 @@ jobs:
 
   run-manifests:
     name: run-manifest-${{ matrix.runId }}
-    needs: validate-manifests
-    if: github.event_name != 'pull_request'
+    needs: [validate-manifests, discover-manifests, check-manifests]
+    if: ${{ needs.check-manifests.outputs.has_manifests == 'true' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -372,31 +419,30 @@ jobs:
 
       - name: Aggregate results
         id: aggregate
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $ErrorActionPreference = 'Stop'
-            try {
-              $shouldWriteBaseline = ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -or $env:GITHUB_REF -eq 'refs/heads/main')
-              $args = @('-ArtifactsDir','artifacts','-OutputJson','manifest-run-summary.json','-BaselinePath','.github/cache_manifest/pssa-baseline.json')
-              if ($shouldWriteBaseline) {
-                Write-Host '[aggregate] Running aggregation and writing baseline'
-                pwsh -NoProfile -File tools/ci/aggregate-report.ps1 $args -WriteBaseline
-              } else {
-                Write-Host '[aggregate] Running aggregation (no baseline write)'
-                pwsh -NoProfile -File tools/ci/aggregate-report.ps1 $args
-              }
-            } catch {
-              Write-Host "[aggregate] aggregator failed: $($_.Exception.Message)"
-              # Emit minimal contracts so downstream decision engine can run and report
-              $minimal = [ordered]@{
-                passed = 0
-                failed = 0
-                failedRuns = @()
-                pssa = @{ newFindings = 0; existingFindings = 0; resolvedFindings = 0 }
-              }
-              $minimal | ConvertTo-Json -Depth 10 | Set-Content -Path manifest-run-summary.json -Encoding UTF8
-              if (-not (Test-Path 'manifest-run-diff.json')) { '{}' | Out-File -FilePath manifest-run-diff.json -Encoding utf8 }
+          $ErrorActionPreference = 'Stop'
+          try {
+            $shouldWriteBaseline = ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -or $env:GITHUB_REF -eq 'refs/heads/main')
+            $args = @('-ArtifactsDir','artifacts','-OutputJson','manifest-run-summary.json','-BaselinePath','.github/cache_manifest/pssa-baseline.json')
+            if ($shouldWriteBaseline) {
+              Write-Host '[aggregate] Running aggregation and writing baseline'
+              pwsh -NoProfile -File tools/ci/aggregate-report.ps1 $args -WriteBaseline
+            } else {
+              Write-Host '[aggregate] Running aggregation (no baseline write)'
+              pwsh -NoProfile -File tools/ci/aggregate-report.ps1 $args
             }
+          } catch {
+            Write-Host "[aggregate] aggregator failed: $($_.Exception.Message)"
+            # Emit minimal contracts so downstream decision engine can run and report
+            $minimal = [ordered]@{
+              passed = 0
+              failed = 0
+              failedRuns = @()
+              pssa = @{ newFindings = 0; existingFindings = 0; resolvedFindings = 0 }
+            }
+            $minimal | ConvertTo-Json -Depth 10 | Set-Content -Path manifest-run-summary.json -Encoding UTF8
+            if (-not (Test-Path 'manifest-run-diff.json')) { '{}' | Out-File -FilePath manifest-run-diff.json -Encoding utf8 }
           }
 
       - name: Upload manifest diff artifact
@@ -406,6 +452,8 @@ jobs:
           name: manifest-run-diff
           path: manifest-run-diff.json
 
+      # debug bundle moved below to capture ci-decision.json
+
       - name: CI Contract Test
         if: always()
         run: |
@@ -414,11 +462,21 @@ jobs:
       - name: Run CI Decision Engine
         id: run_ci_decision
         if: always()
+        shell: pwsh
         run: |
-          pwsh -NoProfile -File tools/ci/ci-decision.ps1 `
-            -SummaryPath manifest-run-summary.json `
-            -DiffPath manifest-run-diff.json `
-            -OutputPath ci-decision.json
+          & 'tools/ci/ci-decision.ps1' -SummaryPath 'manifest-run-summary.json' -DiffPath 'manifest-run-diff.json' -OutputPath 'ci-decision.json'
+
+      - name: Upload debug bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-bundle
+          path: |
+            manifest-run-summary.json
+            manifest-run-diff.json
+            ci-decision.json
+          retention-days: 7
+          if-no-files-found: warn
 
       - name: Enforce CI Decision
         id: enforce_ci_decision
