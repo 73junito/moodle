@@ -266,6 +266,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Restore manifest cache (per-run)
+        if: false # temporarily disabled to avoid cache-related cancellations during run-manifest
         id: manifest_cache_run
         uses: actions/cache@v4
         with:
