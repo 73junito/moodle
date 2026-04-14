@@ -190,6 +190,7 @@ jobs:
         run: pwsh -NoProfile -File tools/ci/tests/guard_discovery.ps1
 
       - name: Restore manifest cache (per-run)
+        if: false # temporarily disabled to avoid cache-related cancellations during validation
         id: manifest_cache
         uses: actions/cache@v4
         with:
