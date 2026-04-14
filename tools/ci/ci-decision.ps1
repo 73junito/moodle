@@ -194,6 +194,16 @@ $out = [ordered]@{
   timestamp = (Get-Date).ToString('o')
 }
 
+# Extra safety: if summary appears to be a minimal fallback emitted by aggregator, fail
+try {
+  if ($summary -and $summary.PSObject.Properties.Name -contains 'passed') {
+    # normal
+  } else {
+    $out.decision = 'fail'
+    $out.reason = 'invalid_aggregate_fallback'
+  }
+} catch { }
+
 ($out | ConvertTo-Json -Depth 10) | Set-Content -Path $OutputPath -Encoding UTF8 -Force
 Write-Host "[ci-decision] Wrote decision to $OutputPath"
 ($out | ConvertTo-Json -Depth 10) | Write-Host

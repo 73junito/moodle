@@ -24,6 +24,14 @@ tools/runs/
 tools/runs/**/output/
 tools/runs/**/artifacts/
 
+# CI runtime artifacts (should not be committed)
+manifest-run-summary.json
+manifest-run-diff.json
+ci-decision.json
+out.json
+test-ci-decision.json
+.github/artifacts/
+
 # Keep versioned fixtures under tools/fixtures/
 
 # local OS VCS/temp
