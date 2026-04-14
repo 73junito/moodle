@@ -32,9 +32,11 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Installing node stuff
-        run: npm install
+        if: ${{ hashFiles('**/package.json') != '' }}
+        run: npm ci
 
       - name: Running grunt
+        if: ${{ hashFiles('**/package.json') != '' }}
         run: npx grunt
 
       - name: Looking for uncommitted changes
