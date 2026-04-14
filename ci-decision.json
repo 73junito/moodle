@@ -1,0 +1,39 @@
+{
+  "decision": "pass",
+  "reason": "none",
+  "mode": "dev",
+  "mode_source": "G:\\moodle\\ci-mode.json",
+  "signals": {
+    "diff": false,
+    "validation": false,
+    "pssa": false
+  },
+  "provenance": {
+    "diff_regressions": 0,
+    "validation_failures": 0,
+    "pssa_new_findings": 0,
+    "mode_source": "G:\\moodle\\ci-mode.json"
+  },
+  "appliedRuleSetVersion": "dfbd3eba172b1e7eac39980c4b29029a5703dc91f6550543ba54c5515b2657b9",
+  "ruleEvaluationTrace": [
+    {
+      "signal": "diff",
+      "enabled": false,
+      "threshold": 1,
+      "actual": 0
+    },
+    {
+      "signal": "validation",
+      "enabled": false,
+      "threshold": null,
+      "actual": 0
+    },
+    {
+      "signal": "pssa",
+      "enabled": false,
+      "threshold": 1,
+      "actual": 0
+    }
+  ],
+  "timestamp": "2026-04-13T22:40:44.6317509-05:00"
+}

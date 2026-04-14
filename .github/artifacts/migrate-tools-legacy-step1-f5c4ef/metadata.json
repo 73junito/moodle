@@ -1,0 +1,23 @@
+{
+  "runId": "migrate-tools-legacy-step1-f5c4ef",
+  "manifest": "G:\\moodle\\tools\\ci\\migrations\\validation-report.migrate-tools-legacy-step1-f5c4ef.json",
+  "timestamp": "2026-04-13T19:44:39.1531377-05:00",
+  "status": "success",
+  "exitCode": 0,
+  "errors": [],
+  "attempts": 1,
+  "timeoutHit": false,
+  "retry": null,
+  "attemptsHistory": [
+    {
+      "attempt": 1,
+      "reason": "success",
+      "exitCode": 0,
+      "errors": [],
+      "steps": [],
+      "timestamp": "2026-04-13T19:44:39.1481222-05:00"
+    }
+  ],
+  "inputs": [],
+  "outputs": []
+}

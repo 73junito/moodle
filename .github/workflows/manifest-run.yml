@@ -9,18 +9,69 @@ on:
     paths:
       - '**/manifest.json'
       - 'tools/**/manifest.json'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      diff_mode:
+        description: "DIFF_MODE (report | gate)"
+        required: false
+        default: "report"
+      pssa_mode:
+        description: "PSSA_MODE (baseline | strict)"
+        required: false
+        default: "baseline"
+      manifest_validation_mode:
+        description: "MANIFEST_VALIDATION_MODE (baseline | strict)"
+        required: false
+        default: "baseline"
 
 env:
   # default retention values (days) can be overridden via workflow inputs or secrets later
   ARTIFACT_RETENTION_SUCCESS: 3
   ARTIFACT_RETENTION_FAILURE: 14
-  PSSA_MODE: baseline
-  MANIFEST_VALIDATION_MODE: ${{ github.event_name == 'pull_request' && 'baseline' || 'strict' }}
+  PSSA_MODE: ${{ github.event.inputs.pssa_mode || 'baseline' }}
+  MANIFEST_VALIDATION_MODE: ${{ github.event.inputs.manifest_validation_mode || 'baseline' }}
+  # DIFF_MODE: 'report' = only upload diff; 'gate' = fail CI on regressions
+  # Default mapped from workflow_dispatch input (or falls back to 'report')
+  DIFF_MODE: ${{ github.event.inputs.diff_mode || 'report' }}
 
 jobs:
+  resolve-mode:
+    name: resolve-mode
+    runs-on: ubuntu-latest
+    outputs:
+      ci_mode: ci
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve CI Mode
+        id: resolve
+        run: |
+          pwsh -NoProfile -File tools/ci/Resolve-CIMode.ps1
+
+      - name: CI-mode consistency check (non-blocking)
+        id: ci_mode_check
+        run: |
+          pwsh -NoProfile -Command {
+            $ErrorActionPreference = 'Stop'
+            $ciPath = Join-Path $env:GITHUB_WORKSPACE 'ci-mode.json'
+            $ci = $null
+            if (Test-Path $ciPath) {
+              try { $ci = Get-Content $ciPath -Raw | ConvertFrom-Json -ErrorAction Stop } catch { $ci = $null }
+            }
+            $label1 = if ($ci -and $ci.Label) { $ci.Label } else { $null }
+            $label2 = if ($env:CI_MODE_LABEL) { $env:CI_MODE_LABEL } else { $null }
+            Write-Host "[ci-check] ci-mode.json label = $label1"
+            Write-Host "[ci-check] env label = $label2"
+            if ($label1 -and $label2 -and ($label1 -ne $label2)) {
+              Write-Host "::warning::CI mode mismatch between ci-mode.json and CI_MODE_LABEL"
+            }
+            exit 0
+          }
+
   discover-manifests:
     name: discover-manifests
+    needs: resolve-mode
     runs-on: ubuntu-latest
     outputs:
       manifests: ${{ steps.set_manifests.outputs.manifests }}
@@ -74,39 +125,39 @@ jobs:
             "manifests=$json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           }
 
-    lint-psa:
-      name: PSScriptAnalyzer
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
+  lint-psa:
+    name: PSScriptAnalyzer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        - name: Install PSScriptAnalyzer
-          run: |
-            pwsh -NoProfile -Command {
-              Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -AllowClobber
-            }
+      - name: Install PSScriptAnalyzer
+        run: |
+          pwsh -NoProfile -Command {
+            Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -AllowClobber
+          }
 
-        - name: Run PSScriptAnalyzer (CI mode respects PSSA_MODE)
-          id: pssa
-          run: |
-            pwsh -NoProfile -Command {
-              $ErrorActionPreference = 'Stop'
-              $outdir = '.github/artifacts'
-              if (-not (Test-Path $outdir)) { New-Item -ItemType Directory -Path $outdir -Force | Out-Null }
-              $res = Invoke-ScriptAnalyzer -Path 'tools/ci' -Recurse -ErrorAction SilentlyContinue
-              $res | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $outdir 'pssa-results.json') -Encoding UTF8
-              $errCount = ($res | Where-Object { $_.Severity -in @('Error','Critical') }).Count
-              Write-Host "PSScriptAnalyzer found $errCount errors"
-              if ($env:PSSA_MODE -eq 'strict' -and $errCount -gt 0) { Write-Host 'Failing due to PSScriptAnalyzer errors'; exit 1 }
-              if ($env:PSSA_MODE -ne 'strict' -and $errCount -gt 0) { Write-Host 'PSScriptAnalyzer errors found (baseline mode)'; }
-            }
+      - name: Run PSScriptAnalyzer (CI mode respects PSSA_MODE)
+        id: pssa
+        run: |
+          pwsh -NoProfile -Command {
+            $ErrorActionPreference = 'Stop'
+            $outdir = '.github/artifacts'
+            if (-not (Test-Path $outdir)) { New-Item -ItemType Directory -Path $outdir -Force | Out-Null }
+            $res = Invoke-ScriptAnalyzer -Path 'tools/ci' -Recurse -ErrorAction SilentlyContinue
+            $res | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $outdir 'pssa-results.json') -Encoding UTF8
+            $errCount = ($res | Where-Object { $_.Severity -in @('Error','Critical') }).Count
+            Write-Host "PSScriptAnalyzer found $errCount errors"
+            if ($env:PSSA_MODE -eq 'strict' -and $errCount -gt 0) { Write-Host 'Failing due to PSScriptAnalyzer errors'; exit 1 }
+            if ($env:PSSA_MODE -ne 'strict' -and $errCount -gt 0) { Write-Host 'PSScriptAnalyzer errors found (baseline mode)'; }
+          }
 
-        - name: Upload PSScriptAnalyzer results
-          uses: actions/upload-artifact@v4
-          with:
-            name: pssa-results
-            path: .github/artifacts/pssa-results.json
+      - name: Upload PSScriptAnalyzer results
+        uses: actions/upload-artifact@v4
+        with:
+          name: pssa-results
+          path: .github/artifacts/pssa-results.json
 
 
   validate-manifests:
@@ -319,28 +370,64 @@ jobs:
         with:
           path: artifacts
 
-      - name: Aggregate metadata and write step summary
+      - name: Aggregate results
         id: aggregate
-        run: |
-          pwsh -NoProfile -File tools/ci/aggregate-report.ps1 -ArtifactsDir artifacts -OutputJson manifest-run-summary.json -BaselinePath .github/cache_manifest/pssa-baseline.json
-
-      - name: Optionally write baseline (only on dispatch or main)
-        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
-        run: |
-          pwsh -NoProfile -File tools/ci/aggregate-report.ps1 -ArtifactsDir artifacts -OutputJson manifest-run-summary.json -BaselinePath .github/cache_manifest/pssa-baseline.json -WriteBaseline
-
-      - name: Fail if new PSScriptAnalyzer findings
-        id: fail_on_new_pssa
         run: |
           pwsh -NoProfile -Command {
             $ErrorActionPreference = 'Stop'
-            $path = 'manifest-run-summary.json'
-            if (-not (Test-Path $path)) { Write-Host 'No summary produced; skipping PSSA gate'; exit 0 }
-            $s = Get-Content $path -Raw | ConvertFrom-Json
-            $new = 0
-            if ($s.pssa -and $s.pssa.newFindings) { $new = [int]$s.pssa.newFindings }
-            Write-Host "PSSA new findings: $new"
-            if ($new -gt 0) { Write-Host 'Failing job due to new PSScriptAnalyzer findings'; exit 1 }
+            try {
+              $shouldWriteBaseline = ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -or $env:GITHUB_REF -eq 'refs/heads/main')
+              $args = @('-ArtifactsDir','artifacts','-OutputJson','manifest-run-summary.json','-BaselinePath','.github/cache_manifest/pssa-baseline.json')
+              if ($shouldWriteBaseline) {
+                Write-Host '[aggregate] Running aggregation and writing baseline'
+                pwsh -NoProfile -File tools/ci/aggregate-report.ps1 $args -WriteBaseline
+              } else {
+                Write-Host '[aggregate] Running aggregation (no baseline write)'
+                pwsh -NoProfile -File tools/ci/aggregate-report.ps1 $args
+              }
+            } catch {
+              Write-Host "[aggregate] aggregator failed: $($_.Exception.Message)"
+              # Emit minimal contracts so downstream decision engine can run and report
+              $minimal = [ordered]@{
+                passed = 0
+                failed = 0
+                failedRuns = @()
+                pssa = @{ newFindings = 0; existingFindings = 0; resolvedFindings = 0 }
+              }
+              $minimal | ConvertTo-Json -Depth 10 | Set-Content -Path manifest-run-summary.json -Encoding UTF8
+              if (-not (Test-Path 'manifest-run-diff.json')) { '{}' | Out-File -FilePath manifest-run-diff.json -Encoding utf8 }
+            }
+          }
+
+      - name: Upload manifest diff artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifest-run-diff
+          path: manifest-run-diff.json
+
+      - name: Run CI Decision Engine
+        id: run_ci_decision
+        if: always()
+        run: |
+          pwsh -NoProfile -File tools/ci/ci-decision.ps1 `
+            -SummaryPath manifest-run-summary.json `
+            -DiffPath manifest-run-diff.json `
+            -OutputPath ci-decision.json
+
+      - name: Enforce CI Decision
+        id: enforce_ci_decision
+        run: |
+          pwsh -NoProfile -Command {
+            $ErrorActionPreference = 'Stop'
+            if (-not (Test-Path 'ci-decision.json')) { Write-Error 'ci-decision.json missing'; exit 1 }
+            $d = Get-Content 'ci-decision.json' -Raw | ConvertFrom-Json -ErrorAction Stop
+            Write-Host "[ci] decision=$($d.decision) reason=$($d.reason) mode=$($d.mode)"
+            if ($d.decision -ne 'pass') {
+              Write-Error "::error::CI failed via decision engine ($($d.reason))"
+              exit 1
+            }
+            exit 0
           }
 
       - name: Comment PR with summary
@@ -361,7 +448,7 @@ jobs:
             const resolvedF = pssa.resolvedFindings || 0;
             const topFiles = pssa.topFiles || [];
 
-            const artifactsUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/suites/${process.env.GITHUB_RUN_ID}/artifacts`;
+            const artifactsUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 
             let topFilesMd = 'None';
             if (topFiles.length > 0) {

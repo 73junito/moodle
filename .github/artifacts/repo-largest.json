@@ -1,0 +1,202 @@
+[
+  {
+    "path": "G:\\moodle\\tools\\self_heal.ps1",
+    "bytes": 25329
+  },
+  {
+    "path": "G:\\moodle\\tools\\AppLocker.PolicyCompiler.psm1",
+    "bytes": 25048
+  },
+  {
+    "path": "G:\\moodle\\tools\\promote_policy.ps1",
+    "bytes": 24590
+  },
+  {
+    "path": "G:\\moodle\\tools\\ci\\bootstrap\\ollama\\install.ps1",
+    "bytes": 22627
+  },
+  {
+    "path": "G:\\moodle\\tools\\ci\\bootstrap\\ollama_writable\\install.ps1",
+    "bytes": 22627
+  },
+  {
+    "path": "G:\\moodle\\tools\\runs\\recent_files.json",
+    "bytes": 21214
+  },
+  {
+    "path": "G:\\moodle\\tools\\ci\\run.ps1",
+    "bytes": 18230
+  },
+  {
+    "path": "G:\\moodle\\tools\\runs\\run_artifacts.json",
+    "bytes": 15450
+  },
+  {
+    "path": "G:\\moodle\\.github\\workflows\\manifest-run.yml",
+    "bytes": 12994
+  },
+  {
+    "path": "G:\\moodle\\tools\\capability-manifest.json",
+    "bytes": 12348
+  },
+  {
+    "path": "G:\\moodle\\tools\\AppLocker.PolicyIR.ps1",
+    "bytes": 10570
+  },
+  {
+    "path": "G:\\moodle\\tools\\run_policy_compiler.ps1",
+    "bytes": 9095
+  },
+  {
+    "path": "G:\\moodle\\tools\\ci\\aggregate-report.ps1",
+    "bytes": 6264
+  },
+  {
+    "path": "G:\\moodle\\tools\\manifest-generator.ps1",
+    "bytes": 5973
+  },
+  {
+    "path": "G:\\moodle\\tools\\ci_compare_self_heal.ps1",
+    "bytes": 5968
+  },
+  {
+    "path": "G:\\moodle\\.github\\workflows\\windows.yml",
+    "bytes": 5697
+  },
+  {
+    "path": "G:\\moodle\\tools\\tests\\Baseline.Invariants.Tests.ps1",
+    "bytes": 5357
+  },
+  {
+    "path": "G:\\moodle\\README.md",
+    "bytes": 5236
+  },
+  {
+    "path": "G:\\moodle\\.github\\workflows\\onebyone.yml",
+    "bytes": 4741
+  },
+  {
+    "path": "G:\\moodle\\tools\\runs\\verify_ir_emit_20260412_000502\\enforce.xml",
+    "bytes": 4159
+  },
+  {
+    "path": "G:\\moodle\\tools\\runs\\20260412_000538_20260412_000538\\enforce.xml",
+    "bytes": 4159
+  },
+  {
+    "path": "G:\\moodle\\tools\\ci\\ci_validate_manifest.ps1",
+    "bytes": 3910
+  },
+  {
+    "path": "G:\\moodle\\tools\\runs\\20260412_000538_20260412_000538\\audit.xml",
+    "bytes": 3892
+  },
+  {
+    "path": "G:\\moodle\\tools\\runs\\verify_ir_emit_20260412_000502\\audit.xml",
+    "bytes": 3892
+  },
+  {
+    "path": "G:\\moodle\\tools\\tests\\PolicyCompiler.Tests.ps1",
+    "bytes": 3835
+  },
+  {
+    "path": "G:\\moodle\\.github\\workflows\\push.yml",
+    "bytes": 3597
+  },
+  {
+    "path": "G:\\moodle\\tools\\ci\\ci_validate_no_pwsh_command.ps1",
+    "bytes": 3380
+  },
+  {
+    "path": "G:\\moodle\\.github\\workflows\\ci_pipeline.yml",
+    "bytes": 3300
+  },
+  {
+    "path": "G:\\moodle\\tools\\ci\\ci_ollama_run.ps1",
+    "bytes": 3267
+  },
+  {
+    "path": "G:\\moodle\\tools\\ci\\lib\\secure_download.ps1",
+    "bytes": 3197
+  },
+  {
+    "path": "G:\\moodle\\tools\\ci\\ci_validate_no_implicit_paths.ps1",
+    "bytes": 3035
+  },
+  {
+    "path": "G:\\moodle\\.github\\moodlelogo.svg",
+    "bytes": 2752
+  },
+  {
+    "path": "G:\\moodle\\tools\\run_self_heal_pipeline.ps1",
+    "bytes": 2698
+  },
+  {
+    "path": "G:\\moodle\\tools\\runs\\self_heal_candidate_20260412_125048.xml",
+    "bytes": 2605
+  },
+  {
+    "path": "G:\\moodle\\tools\\runs\\self_heal_candidate_20260412_125028.xml",
+    "bytes": 2605
+  },
+  {
+    "path": "G:\\moodle\\.github\\workflows\\config-template.php",
+    "bytes": 2517
+  },
+  {
+    "path": "G:\\moodle\\tools\\ci\\discover-manifests.ps1",
+    "bytes": 2447
+  },
+  {
+    "path": "G:\\moodle\\tools\\regenerate_compare.ps1",
+    "bytes": 2408
+  },
+  {
+    "path": "G:\\moodle\\tools\\tests\\pester-results.xml",
+    "bytes": 2335
+  },
+  {
+    "path": "G:\\moodle\\tools\\applocker_sim_report_20260411_230351.txt",
+    "bytes": 2159
+  },
+  {
+    "path": "G:\\moodle\\tools\\applocker_sim_report_20260411_230325.txt",
+    "bytes": 2159
+  },
+  {
+    "path": "G:\\moodle\\tools\\applocker_sim_report_20260411_230302.txt",
+    "bytes": 2159
+  },
+  {
+    "path": "G:\\moodle\\tools\\applocker_sim_report_20260411_230237.txt",
+    "bytes": 2159
+  },
+  {
+    "path": "G:\\moodle\\tools\\applocker_sim_report_20260411_225957.txt",
+    "bytes": 2159
+  },
+  {
+    "path": "G:\\moodle\\tools\\applocker_sim_report_20260411_225558.txt",
+    "bytes": 2159
+  },
+  {
+    "path": "G:\\moodle\\tools\\smoke_test_promote.ps1",
+    "bytes": 2149
+  },
+  {
+    "path": "G:\\moodle\\.github\\artifacts\\tools-ci-files.json",
+    "bytes": 2114
+  },
+  {
+    "path": "G:\\moodle\\tools\\runs\\20260412_000538_20260412_000538\\simulation.txt",
+    "bytes": 2073
+  },
+  {
+    "path": "G:\\moodle\\tools\\runs\\verify_ir_emit_20260412_000535\\simulation.txt",
+    "bytes": 2071
+  },
+  {
+    "path": "G:\\moodle\\tools\\runs\\verify_ir_emit_20260412_000502\\simulation.txt",
+    "bytes": 2071
+  }
+]

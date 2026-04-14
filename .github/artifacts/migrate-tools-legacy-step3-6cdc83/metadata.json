@@ -1,0 +1,23 @@
+{
+  "runId": "migrate-tools-legacy-step3-6cdc83",
+  "manifest": "G:\\moodle\\tools\\ci\\migrations\\validation-report.migrate-tools-legacy-step3-6cdc83.json",
+  "timestamp": "2026-04-13T19:44:39.1837458-05:00",
+  "status": "success",
+  "exitCode": 0,
+  "errors": [],
+  "attempts": 1,
+  "timeoutHit": false,
+  "retry": null,
+  "attemptsHistory": [
+    {
+      "attempt": 1,
+      "reason": "success",
+      "exitCode": 0,
+      "errors": [],
+      "steps": [],
+      "timestamp": "2026-04-13T19:44:39.1787492-05:00"
+    }
+  ],
+  "inputs": [],
+  "outputs": []
+}

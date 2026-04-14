@@ -1,0 +1,31 @@
+{
+  "description": "Default, minimal rules for the CI Decision Engine (v1).\nThese rules are configuration-only; engine still needs to read/apply them.",
+  "priority": ["diff","validation","pssa"],
+  "defaults": {
+    "diff": { "enabled": true, "threshold": 1 },
+    "validation": { "enabled": true },
+    "pssa": { "enabled": false, "threshold": 1 }
+  },
+  "modeOverrides": {
+    "dev": {
+      "diff": { "enabled": false },
+      "validation": { "enabled": false },
+      "pssa": { "enabled": false }
+    },
+    "pr": {
+      "diff": { "enabled": true, "threshold": 1 },
+      "validation": { "enabled": true },
+      "pssa": { "enabled": false }
+    },
+    "main": {
+      "diff": { "enabled": true, "threshold": 1 },
+      "validation": { "enabled": true },
+      "pssa": { "enabled": true, "threshold": 1 }
+    },
+    "audit": {
+      "diff": { "enabled": true },
+      "validation": { "enabled": true },
+      "pssa": { "enabled": true }
+    }
+  }
+}

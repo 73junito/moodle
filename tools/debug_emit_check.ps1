@@ -9,7 +9,7 @@ param(
 
 $ir = Parse-AppLockerPolicyXml -Path './tools/tests/sample_inspect.xml'
 $runDir = if ($RunId) { Join-Path $OutDir $RunId } else { $OutDir }
-$events = Parse-SimulationReport -Path (Join-Path $runDir 'positive_sim.json')
+$events = Parse-SimulationReport -Path (Join-Path $runDir '..\fixtures\positive_sim.json')
 $suggestions = Suggest-RulesFromEvents -Events $events
 $newIR = Merge-SuggestionsIntoIR -IR $ir -Suggestions $suggestions
 Write-Output '--- Normalized Rules ---'

@@ -18,13 +18,13 @@ exported-sandbox-artifacts/
 *.cache
 
 # === runs ===
-# Ignore generated outputs
-tools/runs/output/
-**/runs/
+# Runtime outputs only — keep fixtures/versioned inputs outside `runs/`.
+# Ignore all generated run outputs under the runtime runs tree only.
+tools/runs/
+tools/runs/**/output/
+tools/runs/**/artifacts/
 
-# Allow committed inputs/fixtures
-!/tools/runs/input/
-!/tools/runs/input/*
+# Keep versioned fixtures under tools/fixtures/
 
 # local OS VCS/temp
 .DS_Store

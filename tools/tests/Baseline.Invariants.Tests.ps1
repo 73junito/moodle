@@ -3,7 +3,7 @@ Import-Module -Name "$PSScriptRoot\..\AppLocker.PolicyCompiler.psm1" -Force
 Describe 'AppLocker Baseline Invariants' {
     It 'Baseline rules present, unique, and stable across merge and round-trip' {
         $selfHeal = Join-Path $PSScriptRoot '..\self_heal.ps1'
-        $simReport = Join-Path $PSScriptRoot '..\runs\positive_sim.json'
+        $simReport = Join-Path $PSScriptRoot '..\fixtures\positive_sim.json'
         $policyIn = Join-Path $PSScriptRoot 'sample_inspect.xml'
 
         if (-not (Test-Path $selfHeal)) { throw "self_heal.ps1 not found: $selfHeal" }

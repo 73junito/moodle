@@ -1,0 +1,86 @@
+[
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\aggregate-report.ps1",
+    "Length": 6264
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\ci_ollama_custom.ps1",
+    "Length": 1620
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\ci_ollama_run.ps1",
+    "Length": 3267
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\ci_ollama_writable.ps1",
+    "Length": 1642
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\ci_validate_manifest.ps1",
+    "Length": 3910
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\ci_validate_no_implicit_paths.ps1",
+    "Length": 3035
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\ci_validate_no_pwsh_command.ps1",
+    "Length": 3380
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\ci_validate_no_run_outputs.ps1",
+    "Length": 1051
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\ci_validate_run_schema.ps1",
+    "Length": 1728
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\discover-manifests.ps1",
+    "Length": 2447
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\ollama_autodownload_run.ps1",
+    "Length": 519
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\ollama_autodownload_setup.ps1",
+    "Length": 1784
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\run_guards.ps1",
+    "Length": 875
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\run_manifest.schema.json",
+    "Length": 576
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\run.ps1",
+    "Length": 18230
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\validate-discovery.ps1",
+    "Length": 636
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\bootstrap\\ollama\\install.ps1",
+    "Length": 22627
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\bootstrap\\ollama\\sha256sum.txt",
+    "Length": 1373
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\bootstrap\\ollama\\verified_installer.sha256",
+    "Length": 79
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\bootstrap\\ollama_writable\\install.ps1",
+    "Length": 22627
+  },
+  {
+    "FullName": "G:\\moodle\\tools\\ci\\lib\\secure_download.ps1",
+    "Length": 3197
+  }
+]

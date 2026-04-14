@@ -1,0 +1,9 @@
+{
+  "runId": "migrate-tools-legacy-step1-f5c4ef",
+  "manifest": "G:\\moodle\\tools\\ci\\migrations\\migrate-tools-legacy-step1-f5c4ef.json",
+  "timestamp": "2026-04-13T20:50:36.1032700-05:00",
+  "mode": "dryrun",
+  "inputs": [],
+  "outputs": [],
+  "status": "inputs-validated"
+}

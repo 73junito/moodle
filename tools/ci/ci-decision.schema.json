@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CI Decision Schema",
+  "description": "Schema for the CI decision artifact produced by the Decision Engine.",
+  "type": "object",
+  "required": ["decision","mode","signals","timestamp"],
+  "properties": {
+    "decision": { "type": "string", "enum": ["pass","fail"] },
+    "reason": { "type": "string" },
+    "mode": { "type": "string", "enum": ["dev","pr","main","audit"] },
+    "signals": {
+      "type": "object",
+      "required": ["diff","validation","pssa"],
+      "properties": {
+        "diff": { "type": "boolean" },
+        "validation": { "type": "boolean" },
+        "pssa": { "type": "boolean" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "diff_regressions": { "type": "integer", "minimum": 0 },
+        "validation_failures": { "type": "integer", "minimum": 0 },
+        "pssa_new_findings": { "type": "integer", "minimum": 0 },
+        "mode_source": { "type": "string" }
+      }
+    },
+    "timestamp": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

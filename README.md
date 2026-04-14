@@ -72,7 +72,7 @@ Run a deterministic CI evaluation locally:
 ```powershell
 pwsh -NoProfile -File tools/ci_compare_self_heal.ps1 `
   -PolicyXml tools/tests/sample_inspect.xml `
-  -SimulationReport tools/runs/positive_sim.json `
+  -SimulationReport tools/fixtures/positive_sim.json `
   -RunId local_test_001
 ```
 
