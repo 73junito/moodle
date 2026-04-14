@@ -32,9 +32,11 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Installing node stuff
-        run: npm install
+        if: ${{ hashFiles('**/package.json') != '' }}
+        run: npm ci
 
       - name: Running grunt
+        if: ${{ hashFiles('**/package.json') != '' }}
         run: npx grunt
 
       - name: Looking for uncommitted changes
@@ -80,6 +82,9 @@ jobs:
             db: pgsql
 
     steps:
+      - name: Checking out code
+        uses: actions/checkout@v4
+
       - name: Run MySQL Server
         if: ${{ matrix.db == 'mysqli' }}
         run: |
@@ -106,8 +111,9 @@ jobs:
           ini-values: max_input_vars=5000
           coverage: none
 
-      - name: Checking out code from ${{ env.GITHUB_REF_SLUG }}
-        uses: actions/checkout@v4
+      # Note: initial checkout moved earlier to ensure actions that need the
+      # repository (git-based actions, PHP unit setup) have a working tree.
+      # Remove this duplicate checkout unless a second checkout is required.
 
       - name: Setting up PHPUnit
         env:

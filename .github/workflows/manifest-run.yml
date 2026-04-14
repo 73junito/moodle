@@ -123,6 +123,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Guard discovery integrity
+        run: pwsh -NoProfile -File tools/ci/tests/guard_discovery.ps1
+
       - name: Restore manifest cache (per-run)
         id: manifest_cache
         uses: actions/cache@v4
