@@ -102,24 +102,23 @@ jobs:
 
       - name: Check manifest presence (hybrid mode)
         id: check
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $m = '${{ needs.discover-manifests.outputs.manifests }}'
-            Write-Host "MANIFESTS=$m"
-            $has = 'false'
-            if ($m -ne '[]') { $has = 'true' }
-            if ($m -eq '[]') {
-              if ('${{ github.event_name }}' -eq 'pull_request') {
-                Write-Host "::warning::No manifests found (PR mode)"
-              } elseif ('${{ github.ref }}' -eq 'refs/heads/main') {
-                Write-Host "::error::No manifests found on main branch"
-                exit 1
-              } else {
-                Write-Host "No manifests found (non-main branch)"
-              }
+          $m = '${{ needs.discover-manifests.outputs.manifests }}'
+          Write-Host "MANIFESTS=$m"
+          $has = 'false'
+          if ($m -ne '[]') { $has = 'true' }
+          if ($m -eq '[]') {
+            if ('${{ github.event_name }}' -eq 'pull_request') {
+              Write-Host "::warning::No manifests found (PR mode)"
+            } elseif ('${{ github.ref }}' -eq 'refs/heads/main') {
+              Write-Host "::error::No manifests found on main branch"
+              exit 1
+            } else {
+              Write-Host "No manifests found (non-main branch)"
             }
-            "has_manifests=$has" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           }
+          "has_manifests=$has" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
   lint-psa:
     name: PSScriptAnalyzer
@@ -153,18 +152,17 @@ jobs:
 
       - name: Run PSScriptAnalyzer (CI mode respects PSSA_MODE)
         id: pssa
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $ErrorActionPreference = 'Stop'
-            $outdir = '.github/artifacts'
-            if (-not (Test-Path $outdir)) { New-Item -ItemType Directory -Path $outdir -Force | Out-Null }
-            $res = Invoke-ScriptAnalyzer -Path 'tools/ci' -Recurse -ErrorAction SilentlyContinue
-            $res | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $outdir 'pssa-results.json') -Encoding UTF8
-            $errCount = ($res | Where-Object { $_.Severity -in @('Error','Critical') }).Count
-            Write-Host "PSScriptAnalyzer found $errCount errors"
-            if ($env:PSSA_MODE -eq 'strict' -and $errCount -gt 0) { Write-Host 'Failing due to PSScriptAnalyzer errors'; exit 1 }
-            if ($env:PSSA_MODE -ne 'strict' -and $errCount -gt 0) { Write-Host 'PSScriptAnalyzer errors found (baseline mode)'; }
-          }
+          $ErrorActionPreference = 'Stop'
+          $outdir = '.github/artifacts'
+          if (-not (Test-Path $outdir)) { New-Item -ItemType Directory -Path $outdir -Force | Out-Null }
+          $res = Invoke-ScriptAnalyzer -Path 'tools/ci' -Recurse -ErrorAction SilentlyContinue
+          $res | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $outdir 'pssa-results.json') -Encoding UTF8
+          $errCount = ($res | Where-Object { $_.Severity -in @('Error','Critical') }).Count
+          Write-Host "PSScriptAnalyzer found $errCount errors"
+          if ($env:PSSA_MODE -eq 'strict' -and $errCount -gt 0) { Write-Host 'Failing due to PSScriptAnalyzer errors'; exit 1 }
+          if ($env:PSSA_MODE -ne 'strict' -and $errCount -gt 0) { Write-Host 'PSScriptAnalyzer errors found (baseline mode)'; }
 
       - name: Upload PSScriptAnalyzer results
         uses: actions/upload-artifact@v4
