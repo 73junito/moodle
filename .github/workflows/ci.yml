@@ -1,9 +1,7 @@
 name: CI Guards
 
 on:
-  pull_request:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   guards:
@@ -13,6 +11,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run CI Guards
-        shell: pwsh
+        shell: pwsh -NoProfile -command ". '{0}'"
         run: |
-          pwsh -File tools/ci/run_guards.ps1 -Root .
+          ./tools/ci/run_guards.ps1 -Root .

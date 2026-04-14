@@ -27,22 +27,19 @@ $violations = @()
 
 foreach ($file in $files) {
 
-    # Path-based blocking
+    # Path-based blocking (match on path segment boundaries to avoid false positives)
     foreach ($dir in $blockedDirs) {
+        # Special-case tools/runs: allow committed inputs under tools/runs/input/, but block other run outputs
         if ($dir -eq "tools/runs") {
-            # Allow committed inputs under tools/runs/input/, but block generated outputs under tools/runs/*
-            if ($file -like "tools/runs/input/*") {
+            if ($file -like "tools/runs/input/*" -or $file -like "tools/runs/input\\*") {
                 break
             }
-            if ($file -like "tools/runs/*") {
-                $violations += "Blocked directory path: $file"
-                break
-            }
-        } else {
-            if ($file -like "*$dir*") {
-                $violations += "Blocked directory path: $file"
-                break
-            }
+        }
+
+        $pattern = "(^|[\\/])" + [regex]::Escape($dir) + "([\\/]|$)"
+        if ($file -match $pattern) {
+            $violations += "Blocked directory path: $file"
+            break
         }
     }
 
