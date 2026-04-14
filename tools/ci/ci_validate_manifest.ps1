@@ -42,7 +42,10 @@ $manifestDirFull = (Get-Item -LiteralPath $manifestDir).FullName.TrimEnd('\')
 try {
     if ($EnforceRunDir) {
         $runFolder = Split-Path -Leaf $manifestDir
-        if ($runFolder -ne $json.runId) {
+        # Allow migration manifests to live in a shared 'migrations' folder
+        if ($runFolder -eq 'migrations') {
+            Write-Host "Skipping EnforceRunDir for migrations folder"
+        } elseif ($runFolder -ne $json.runId) {
             throw "Manifest runId '$($json.runId)' does not match containing folder '$runFolder'"
         }
     }

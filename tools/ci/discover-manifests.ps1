@@ -20,14 +20,13 @@ if (Test-Path 'tools/runs') {
   $files += Get-ChildItem -Path 'tools/runs' -Recurse -Filter '*.json' -File -ErrorAction SilentlyContinue
 }
 if (Test-Path 'tools' ) {
-  # include top-level capability manifest if present
-  $cap = Join-Path 'tools' 'capability-manifest.json'
-  if (Test-Path $cap) { $files += Get-Item -LiteralPath $cap -ErrorAction SilentlyContinue }
+  # skip including top-level capability manifest here — it's not a run manifest
+  # capability-manifest.json is an index document and not intended for per-run validation
 }
 
 # Deduplicate and then exclude known artifact filename patterns to avoid treating outputs as manifests
 $files = $files | Sort-Object FullName -Unique | Where-Object { 
-  $_.Name -notlike 'validation-report*' -and $_.Name -notlike 'metadata*' -and $_.Name -notlike '*.report*.json'
+  $_.Name -notlike 'validation-report*' -and $_.Name -notlike 'metadata*' -and $_.Name -notlike '*.report*.json' -and $_.Name -ine 'capability-manifest.json'
 }
 
 # compute CI fingerprint to invalidate caches when CI changes
