@@ -406,6 +406,11 @@ jobs:
           name: manifest-run-diff
           path: manifest-run-diff.json
 
+      - name: CI Contract Test
+        if: always()
+        run: |
+          pwsh -NoProfile -File tools/ci/tests/test_ci_contract.ps1
+
       - name: Run CI Decision Engine
         id: run_ci_decision
         if: always()
