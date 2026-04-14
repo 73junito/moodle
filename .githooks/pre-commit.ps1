@@ -10,6 +10,9 @@ $blockedDirs = @(
     "tools/runs"
 )
 
+# Allow committed inputs/fixtures under tools/runs/input/
+# (block generated per-run outputs under tools/runs/<RunId>/...)
+
 $blockedExt = @(
     ".csv",
     ".zip",
@@ -26,6 +29,13 @@ foreach ($file in $files) {
 
     # Path-based blocking (match on path segment boundaries to avoid false positives)
     foreach ($dir in $blockedDirs) {
+        # Special-case tools/runs: allow committed inputs under tools/runs/input/, but block other run outputs
+        if ($dir -eq "tools/runs") {
+            if ($file -like "tools/runs/input/*" -or $file -like "tools/runs/input\\*") {
+                break
+            }
+        }
+
         $pattern = "(^|[\\/])" + [regex]::Escape($dir) + "([\\/]|$)"
         if ($file -match $pattern) {
             $violations += "Blocked directory path: $file"

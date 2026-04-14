@@ -18,8 +18,13 @@ exported-sandbox-artifacts/
 *.cache
 
 # === runs ===
-tools/runs/
+# Ignore generated outputs
+tools/runs/output/
 **/runs/
+
+# Allow committed inputs/fixtures
+!/tools/runs/input/
+!/tools/runs/input/*
 
 # local OS VCS/temp
 .DS_Store
