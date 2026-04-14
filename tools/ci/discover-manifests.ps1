@@ -83,7 +83,8 @@ foreach ($f in $files) {
 }
 
 ## Exclude intentionally broken test manifests from discovery
-$items = $items | Where-Object { $_.FullName -notmatch 'broken-manifest' }
+# discovery items are PSCustomObjects with a `path` property, not FileInfo
+$items = $items | Where-Object { $_.path -notmatch 'broken-manifest' }
 
 if ($items.Count -eq 0) { $json = '[]' } else { $json = $items | ConvertTo-Json -Depth 10 -Compress }
 Write-Host $json
