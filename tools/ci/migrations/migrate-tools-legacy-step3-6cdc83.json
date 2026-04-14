@@ -1,0 +1,11 @@
+{
+  "source": "tools/legacy/step3",
+  "version": "1.0",
+  "runId": "migrate-tools-legacy-step3-6cdc83",
+  "timestamp": "2026-04-13T19:22:05.7370998-05:00",
+  "inputs": [],
+  "outputs": [],
+  "logging": {
+    "inlineLogLimitKB": 64
+  }
+}
