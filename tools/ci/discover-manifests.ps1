@@ -82,6 +82,9 @@ foreach ($f in $files) {
   $items += [pscustomobject]@{ path = [string]$path; runId = [string]$runId; hash = [string]$hash; source = [string]$source }
 }
 
+## Exclude intentionally broken test manifests from discovery
+$items = $items | Where-Object { $_.FullName -notmatch 'broken-manifest' }
+
 if ($items.Count -eq 0) { $json = '[]' } else { $json = $items | ConvertTo-Json -Depth 10 -Compress }
 Write-Host $json
 
