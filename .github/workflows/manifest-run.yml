@@ -79,49 +79,16 @@ jobs:
 
       - name: Find manifests and emit safe matrix
         id: set_manifests
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $ErrorActionPreference = 'Stop'
-            $items = @()
-            $files = Get-ChildItem -Path . -Recurse -Filter manifest.json -File -ErrorAction SilentlyContinue
-
-            # compute CI fingerprint to invalidate caches when CI changes
-            $ciFiles = @('tools/ci/ci_validate_manifest.ps1','tools/ci/run.ps1')
-            $ciContent = ''
-            foreach ($c in $ciFiles) { if (Test-Path $c) { $ciContent += (Get-Content $c -Raw) } }
-            $ciHash = ''
-            if ($ciContent -ne '') { $ciHash = (Get-FileHash -InputStream ([System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($ciContent))) -Algorithm SHA256).Hash.ToLower() }
-
-            foreach ($f in $files) {
-              $path = $f.FullName
-              $manifestDir = Split-Path -Parent $path
-              $runId = $null
-              try {
-                $json = Get-Content $path -Raw | ConvertFrom-Json
-                if ($json -and $json.runId) { $runId = [string]$json.runId }
-              } catch { $json = $null }
-              if (-not $runId) { $runId = Split-Path -Leaf $manifestDir }
-
-              # compute manifest hash base: manifest content + referenced inputs + ciHash
-              $manifestContent = Get-Content $path -Raw
-              $inputsContent = ''
-              if ($json -and $null -ne $json.inputs) {
-                foreach ($inp in $json.inputs) {
-                  $p = Join-Path $manifestDir $inp
-                  if (Test-Path $p) { $inputsContent += (Get-Content $p -Raw) }
-                }
-              }
-              $hashBase = $manifestContent + $inputsContent + $ciHash
-              $hash = (Get-FileHash -InputStream ([System.IO.MemoryStream]::new([System.Text.Encoding]::UTF8.GetBytes($hashBase))) -Algorithm SHA256).Hash.ToLower()
-
-              # ensure safe string types for matrix
-              $items += [pscustomobject]@{ path = [string]$path; runId = [string]$runId; hash = [string]$hash }
-            }
-
-            if ($items.Count -eq 0) { $json = '[]' } else { $json = $items | ConvertTo-Json -Depth 10 -Compress }
-            Write-Host "Found manifests: $json"
-            "manifests=$json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          }
+          $ErrorActionPreference = 'Stop'
+          # Run the discovery helper which writes a discovery JSON into .github/artifacts
+          & 'tools/ci/discover-manifests.ps1'
+          $discPath = '.github/artifacts/discovery-manifests.json'
+          if (-not (Test-Path $discPath)) { Write-Host "Found manifests: []"; "manifests=[]" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append; exit 0 }
+          $json = Get-Content -Raw -Path $discPath
+          Write-Host "Found manifests: $json"
+          "manifests=$json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
   check-manifests:
     name: check-manifests (hybrid)
