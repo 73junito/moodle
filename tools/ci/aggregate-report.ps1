@@ -3,6 +3,7 @@ param(
   [string]$OutputJson = 'manifest-run-summary.json',
   [switch]$StrictContract,
   [switch]$TraceRunBuilder,
+  [switch]$DebugDump,
   [string]$BaselinePath
 )
 
@@ -99,49 +100,22 @@ Write-Host "[aggregator] CI mode = label=$ciLabel diff=$ciDiff pssa=$ciPssa vali
 
 ## Phase 1: index-first aggregation (authoritative)
 function Normalize-RunRecord($r) {
+  # Lossless normalization: preserve all existing properties emitted by ingestion
+  # and return an ordered hashtable containing the same keys/values. This avoids
+  # accidental dropping of metadata (e.g. runIdResolved, resolutionSource).
   $out = [ordered]@{}
-  $tmpRunIdVal = $null
-  if (Get-Prop $r 'runId') { $tmpRunIdVal = Get-Prop $r 'runId' }
-  $out.runId = Normalize-RunId $tmpRunIdVal
-  $out.manifestPath = if (Get-Prop $r 'manifestPath') { [string](Get-Prop $r 'manifestPath') } else { $null }
-  $out.source = if (Get-Prop $r 'source') { [string](Get-Prop $r 'source') } else { 'unknown' } 
-  $s = if (Get-Prop $r 'status') { [string](Get-Prop $r 'status').ToLower() } else { $null }    
-  $allowed = @('success','failed','skipped')
-  if ($s -and ($allowed -contains $s)) { $out.status = $s } else { $out.status = 'skipped' }    
-  $out.attemptCount = if (Get-Prop $r 'attemptCount') { try { [int](Get-Prop $r 'attemptCount') } catch { 0 } } else { 0 }
-  $out.attemptHistory = if (Get-Prop $r 'attemptHistory') { @((Get-Prop $r 'attemptHistory')) } else { @() }
-  $out.reason = if (Get-Prop $r 'reason') { (Get-Prop $r 'reason') } else { $null }
-
-  $art = [ordered]@{
-    indexPath = $null; metadataPath = $null; validationPath = $null; pssaPath = $null; stepsPaths = @()
+  if ($null -eq $r) { return $out }
+  try {
+    foreach ($prop in $r.PSObject.Properties) {
+      $out[$prop.Name] = $prop.Value
+    }
+    # Default: if no explicit runIdResolved flag was set upstream, assume this
+    # record was produced from canonical/index ingestion and mark it resolved.
+    if (-not $out.PSObject.Properties.Name -contains 'runIdResolved') { $out.runIdResolved = $true }
+  } catch {
+    # Fallback: ensure at least the runId is present (best-effort)
+    if (Get-Prop $r 'runId') { $out.runId = Normalize-RunId (Get-Prop $r 'runId') }
   }
-  if (Get-Prop $r 'artifacts') {
-    $artObj = Get-Prop $r 'artifacts'
-    $art.indexPath = if (Get-Prop $artObj 'indexPath') { [string](Get-Prop $artObj 'indexPath') } else { $null }
-    $art.metadataPath = if (Get-Prop $artObj 'metadataPath') { [string](Get-Prop $artObj 'metadataPath') } else { $null }
-    $art.validationPath = if (Get-Prop $artObj 'validationPath') { [string](Get-Prop $artObj 'validationPath') } else { $null }
-    $art.pssaPath = if (Get-Prop $artObj 'pssaPath') { [string](Get-Prop $artObj 'pssaPath') } else { $null }
-    $art.stepsPaths = if (Get-Prop $artObj 'stepsPaths') { @((Get-Prop $artObj 'stepsPaths')) } else { @() }
-  }
-  $out.artifacts = $art
-
-  # Normalized validation/post fields when present
-  $val = [ordered]@{ pre = $null; post = $null }
-  $valObj = Get-Prop $r 'validation'
-  if ($valObj) {
-    if (Get-Prop $valObj 'pre') { $val.pre = (Get-Prop $valObj 'pre' | Select-Object -Property *) }
-    if (Get-Prop $valObj 'post') { $val.post = (Get-Prop $valObj 'post' | Select-Object -Property *) }
-  }
-  $out.validation = $val
-
-  # pssa normalization: attempt to surface a findings array if present
-  $pssaVal = $null
-  if (Get-Prop $r 'pssa') {
-    $ps = Get-Prop $r 'pssa'
-    $pssaVal = $ps
-  }
-  $out.pssa = $pssaVal
-
   return $out
 }
 
@@ -315,6 +289,7 @@ if (Test-Path $ArtifactsDir) {
       $legacyRunId = Normalize-RunId $idxRunId
       $legacy = [ordered]@{
         runId = Normalize-RunId $legacyRunId
+        runIdResolved = $false
         manifestPath = if ($idxManifest) { $idxManifest } else { $null }
         source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }      
         status = 'skipped'
@@ -353,6 +328,7 @@ if (Test-Path $ArtifactsDir) {
     $record = [ordered]@{
       # Use the resolved runId determined earlier and keep it immutable for this record
       runId = $idxRunId
+      runIdResolved = $true
       manifestPath = if ($idxManifest) { $idxManifest } else { $null }
       source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }        
       status = [string]$status
@@ -397,6 +373,7 @@ foreach ($f in $candidates) {
     if (-not ($runRecords | Where-Object { $_.runId -eq $runId })) {
     $fallback = [ordered]@{
       runId = $runId
+      runIdResolved = $false
       manifestPath = $null
       source = 'unknown'
       status = 'skipped'
@@ -468,49 +445,160 @@ foreach ($r in $runRecords) {
   $pssaVal = $null
   if (Get-Prop $r 'pssa') { $pssaVal = (Get-Prop $r 'pssa' | Select-Object -Property *) }       
 
-  $attemptHistoryVal = @()
-  $ahRaw = Get-Prop $r 'attemptHistory'
-  if ($ahRaw) {
-    foreach ($ah in @($ahRaw)) {
-      if ($ah -eq $null) { continue }
-      $attemptHistoryVal += [ordered]@{
-        attempt = (Get-Prop $ah 'attempt')
-        reason = (Get-Prop $ah 'reason')
-        exitCode = (Get-Prop $ah 'exitCode')
-        timestamp = (Get-Prop $ah 'timestamp')
-        errors = @(@(Get-Prop $ah 'errors'))[0]
-        stepsCount = (@(Get-Prop $ah 'steps')).Count
-      }
+  # Normalize the input record losslessly and treat this function as the
+  # authoritative source of truth for record shape. This avoids re-creating
+  # the object from scratch and accidentally dropping provenance metadata
+  # such as `runIdResolved`.
+  $record = Normalize-RunRecord $r
+
+  # Ensure canonical fields are present and normalized (do not overwrite
+  # `runId` or `runIdResolved` when already present).
+  $record.status = $statusVal
+  $record.attemptCount = $attemptCountVal
+  $record.attemptHistory = if (Get-Prop $record 'attemptHistory') { Get-Prop $record 'attemptHistory' } else { @() }
+  if (-not (Get-Prop $record 'reason')) { $record.reason = $null }
+  if (-not (Get-Prop $record 'validation')) { $record.validation = $validationVal } else {
+    if (-not (Get-Prop $record.validation 'pre')) { $record.validation.pre = $validationVal.pre }
+    if (-not (Get-Prop $record.validation 'post')) { $record.validation.post = $validationVal.post }
+  }
+  if (-not (Get-Prop $record 'pssa')) { $record.pssa = $pssaVal }
+
+  # Ensure canonical artifact structure exists and preserve any existing
+  # artifact fields emitted earlier.
+  if (-not (Get-Prop $record 'artifacts')) { $record.artifacts = $art } else {
+    $artObj = Get-Prop $record 'artifacts'
+    if (-not (Get-Prop $artObj 'indexPath')) { $artObj.indexPath = $art.indexPath }
+    if (-not (Get-Prop $artObj 'metadataPath')) { $artObj.metadataPath = $art.metadataPath }
+    if (-not (Get-Prop $artObj 'validationPath')) { $artObj.validationPath = $art.validationPath }
+    if (-not (Get-Prop $artObj 'pssaPath')) { $artObj.pssaPath = $art.pssaPath }
+    if (-not (Get-Prop $artObj 'stepsPaths')) { $artObj.stepsPaths = $art.stepsPaths }
+    $record.artifacts = $artObj
+  }
+
+  # Final validation: ensure runId is present; if not, set explicit unresolved marker
+  # attempt to recover runId from nested SyncRoot (some PSObject shapes embed original values)
+  if (-not (Get-Prop $record 'runId')) {
+    if ($record.PSObject.Properties.Name -contains 'SyncRoot') {
+      try {
+        $sr = $record.SyncRoot
+        if ($sr -and $sr.PSObject.Properties.Name -contains 'runId') { $record.runId = Normalize-RunId $sr.runId }
+      } catch { }
     }
   }
 
-  $record = [ordered]@{
-    # Preserve the runId already stored on the record; do not recompute from other sources.
-    runId = if (Get-Prop $r 'runId') { (Get-Prop $r 'runId') } else { $null }
-    manifestPath = if (Get-Prop $r 'manifestPath') { [string](Get-Prop $r 'manifestPath') } else { $null }
-    source = if (Get-Prop $r 'source') { [string](Get-Prop $r 'source') } else { 'unknown' }    
-    status = $statusVal
-    attemptCount = $attemptCountVal
-    attemptHistory = $attemptHistoryVal
-    reason = if (Get-Prop $r 'reason') { (Get-Prop $r 'reason') } else { $null }
-    artifacts = $art
-    validation = $validationVal
-    pssa = $pssaVal
-  }
-
-  # Final validation: ensure runId is present; if not, convert to an explicit skipped record    
-  if ([string]::IsNullOrWhiteSpace($record.runId)) {
+  if (-not (Get-Prop $record 'runId') -or [string]::IsNullOrWhiteSpace([string](Get-Prop $record 'runId'))) {
     $record.runId = 'unknown'
-    if (-not $record.reason) { $record.reason = 'invalid_missing_runId' }
+    if (-not (Get-Prop $record 'reason')) { $record.reason = 'invalid_missing_runId' }
     $record.status = 'skipped'
-    if (-not $record.manifestPath) { $record.manifestPath = $null }
-    if (-not $record.source) { $record.source = 'unknown' }
+    if (-not (Get-Prop $record 'manifestPath')) { $record.manifestPath = $null }
+    if (-not (Get-Prop $record 'source')) { $record.source = 'unknown' }
+    # Preserve explicit unresolved flag only if not present
+    if (-not (Get-Prop $record 'runIdResolved')) { $record.runIdResolved = $false }
   }
 
   $finalRecords += $record
 }
 
 $runRecords = $finalRecords
+
+# Final sanitization pass: create brand-new plain objects per record to avoid
+# any ambiguity from mixed PSObject/hashtable shapes. Always prefer values
+# from nested SyncRoot (authoritative) when present, otherwise fall back to
+# top-level properties. This guarantees deterministic serialization.
+function Get-CanonicalValue($r, $name) {
+  try {
+    # Try direct nested access first (works for PSObjects and OrderedDictionary-like objects)
+    try {
+      if ($r -ne $null) {
+        $sr = $null
+        try { $sr = $r.SyncRoot } catch { $sr = $null }
+        if ($sr -ne $null) {
+          try {
+            $v = $sr.$name
+            if ($v -ne $null) { return $v }
+          } catch { }
+        }
+        # Try top-level direct property access
+        try {
+          $tv = $r.$name
+          if ($tv -ne $null) { return $tv }
+        } catch { }
+      }
+    } catch { }
+    # Fallback to property introspection helper
+    return Get-Prop $r $name
+  } catch { return $null }
+}
+
+$cleanRecords = @()
+foreach ($r in $runRecords) {
+  $artObj = Get-CanonicalValue $r 'artifacts'
+  $cleanArt = [ordered]@{
+    indexPath = if ($artObj -and (Get-Prop $artObj 'indexPath')) { Get-Prop $artObj 'indexPath' } else { $null }
+    metadataPath = if ($artObj -and (Get-Prop $artObj 'metadataPath')) { Get-Prop $artObj 'metadataPath' } else { $null }
+    validationPath = if ($artObj -and (Get-Prop $artObj 'validationPath')) { Get-Prop $artObj 'validationPath' } else { $null }
+    pssaPath = if ($artObj -and (Get-Prop $artObj 'pssaPath')) { Get-Prop $artObj 'pssaPath' } else { $null }
+    stepsPaths = if ($artObj -and (Get-Prop $artObj 'stepsPaths')) { @((Get-Prop $artObj 'stepsPaths')) } else { @() }
+  }
+
+  $runId = Normalize-RunId (Get-CanonicalValue $r 'runId')
+  $runIdResolved = Get-CanonicalValue $r 'runIdResolved'
+  if ($runIdResolved -eq $null) { $runIdResolved = $false }
+
+  $clean = [ordered]@{
+    runId = if ($runId) { $runId } else { 'unknown' }
+    runIdResolved = [bool]$runIdResolved
+    manifestPath = Get-CanonicalValue $r 'manifestPath'
+    source = if (Get-CanonicalValue $r 'source') { Get-CanonicalValue $r 'source' } else { 'unknown' }
+    status = if (Get-CanonicalValue $r 'status') { (Get-CanonicalValue $r 'status').ToString().ToLower() } else { 'skipped' }
+    attemptCount = if ((Get-CanonicalValue $r 'attemptCount') -ne $null) { try { [int](Get-CanonicalValue $r 'attemptCount') } catch { 0 } } else { 0 }
+    attemptHistory = if (Get-CanonicalValue $r 'attemptHistory') { Get-CanonicalValue $r 'attemptHistory' } else { @() }
+    reason = if (Get-CanonicalValue $r 'reason') { Get-CanonicalValue $r 'reason' } else { $null }
+    artifacts = $cleanArt
+    validation = if (Get-CanonicalValue $r 'validation') { Get-CanonicalValue $r 'validation' } else { [ordered]@{ pre = $null; post = $null } }
+    pssa = if (Get-CanonicalValue $r 'pssa') { Get-CanonicalValue $r 'pssa' } else { $null }
+  }
+
+  $cleanRecords += $clean
+}
+
+# Replace runRecords with the clean projection for final serialization
+$runRecords = $cleanRecords
+
+# Invariant checks: fail fast if we detect regressions that violate contract
+$badResolvedUnknown = @($runRecords | Where-Object { $_.runId -eq 'unknown' -and $_.runIdResolved -eq $true })
+if ($badResolvedUnknown.Count -gt 0) {
+  Write-Host "::error::Invariant violation: resolved record(s) with unknown runId detected: $($badResolvedUnknown.Count)"
+  throw "Invariant violation: resolved record has unknown runId"
+}
+$missingResolved = @($runRecords | Where-Object { -not $_.PSObject.Properties.Name -contains 'runIdResolved' })
+if ($missingResolved.Count -gt 0) {
+  Write-Host "::error::Invariant violation: missing runIdResolved on $($missingResolved.Count) record(s)"
+  throw "Invariant violation: missing runIdResolved"
+}
+
+# Debug dump mode: emit pre/post snapshots and simple diagnostics to the artifacts directory
+if ($DebugDump) {
+  try {
+    $prePath = Join-Path -Path $ArtifactsDir -ChildPath 'pre-normalize.json'
+    ($runRecords | ConvertTo-Json -Depth 10) | Set-Content -Path $prePath -Encoding UTF8 -Force
+  } catch { Write-Host "[debug-dump] failed to write pre-normalize: $($_.Exception.Message)" }
+
+  try {
+    $postPath = Join-Path -Path $ArtifactsDir -ChildPath 'post-normalize.json'
+    ($finalRecords | ConvertTo-Json -Depth 10) | Set-Content -Path $postPath -Encoding UTF8 -Force
+  } catch { Write-Host "[debug-dump] failed to write post-normalize: $($_.Exception.Message)" }
+
+  try {
+    $missing = @($finalRecords | Where-Object { -not $_.PSObject.Properties.Name -contains 'runIdResolved' }).Count
+    $unknownTrue = @($finalRecords | Where-Object { $_.runId -eq 'unknown' -and $_.runIdResolved -eq $true }).Count
+    $realFalse = @($finalRecords | Where-Object { $_.runId -ne 'unknown' -and $_.runIdResolved -eq $false }).Count
+    $diag = [ordered]@{ missingRunIdResolved = $missing; unknownWithTrue = $unknownTrue; realWithFalse = $realFalse }
+    $diagPath = Join-Path -Path $ArtifactsDir -ChildPath 'finalization-diagnostics.json'
+    ($diag | ConvertTo-Json -Depth 5) | Set-Content -Path $diagPath -Encoding UTF8 -Force
+    Write-Host "[debug-dump] Wrote diagnostics to: $diagPath"
+  } catch { Write-Host "[debug-dump] failed to write diagnostics: $($_.Exception.Message)" }
+}
 
 if ($StrictContract) {
   # Run the external schema validator (keeps single source of truth)
