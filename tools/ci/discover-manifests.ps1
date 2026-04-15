@@ -13,11 +13,13 @@ foreach ($p in $patterns) {
 }
 
 # Also include migrated and runs folders explicitly so generated stubs are discoverable
-if (Test-Path 'tools/ci/migrations') {
-  $files += Get-ChildItem -Path 'tools/ci/migrations' -Recurse -Filter '*.json' -File -ErrorAction SilentlyContinue
+$migrationsDir = Join-Path 'tools' 'ci' 'migrations'
+if (Test-Path $migrationsDir) {
+  $files += Get-ChildItem -Path $migrationsDir -Recurse -Filter '*.json' -File -ErrorAction SilentlyContinue
 }
-if (Test-Path 'tools/runs') {
-  $files += Get-ChildItem -Path 'tools/runs' -Recurse -Filter '*.json' -File -ErrorAction SilentlyContinue
+$runsDir = Join-Path 'tools' 'runs'
+if (Test-Path $runsDir) {
+  $files += Get-ChildItem -Path $runsDir -Recurse -Filter '*.json' -File -ErrorAction SilentlyContinue
 }
 if (Test-Path 'tools' ) {
   # skip including top-level capability manifest here — it's not a run manifest
