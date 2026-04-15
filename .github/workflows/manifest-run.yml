@@ -23,6 +23,10 @@ on:
         description: "MANIFEST_VALIDATION_MODE (baseline | strict)"
         required: false
         default: "baseline"
+      trace_runbuilder:
+        description: "Enable TraceRunBuilder in aggregator (true|false)"
+        required: false
+        default: "false"
 
 env:
   # default retention values (days) can be overridden via workflow inputs or secrets later
@@ -411,6 +415,8 @@ jobs:
           try {
             $shouldWriteBaseline = ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -or $env:GITHUB_REF -eq 'refs/heads/main')
             $args = @('-ArtifactsDir','artifacts','-OutputJson','manifest-run-summary.json','-BaselinePath','.github/cache_manifest/pssa-baseline.json')
+            # respect workflow_dispatch input to enable tracing in CI
+            if ($env:TRACE_RUN_BUILDER -and $env:TRACE_RUN_BUILDER -eq 'true') { $args += '-TraceRunBuilder' }
             if ($shouldWriteBaseline) {
               Write-Host '[aggregate] Running aggregation and writing baseline'
               pwsh -NoProfile -File tools/ci/aggregate-report.ps1 $args -WriteBaseline
