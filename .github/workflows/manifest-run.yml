@@ -441,15 +441,19 @@ jobs:
             }
           } catch {
             Write-Host "[aggregate] aggregator failed: $($_.Exception.Message)"
-            # Emit minimal contracts so downstream decision engine can run and report
-            $minimal = [ordered]@{
-              passed = 0
-              failed = 0
-              failedRuns = @()
-              pssa = @{ newFindings = 0; existingFindings = 0; resolvedFindings = 0 }
-            }
-            $minimal | ConvertTo-Json -Depth 10 | Set-Content -Path manifest-run-summary.json -Encoding UTF8
+            Write-Host '[aggregate] Emitting empty run-record array to satisfy decision contract'
+            # Contract: decision engine expects an array of run records. Emit an empty array on failure
+            @() | ConvertTo-Json -Depth 10 | Set-Content -Path manifest-run-summary.json -Encoding UTF8
             if (-not (Test-Path 'manifest-run-diff.json')) { '{}' | Out-File -FilePath manifest-run-diff.json -Encoding utf8 }
+          } finally {
+            # Publish the exact filenames we want the uploader to send. Use GITHUB_OUTPUT for step outputs.
+            if ($env:GITHUB_OUTPUT) {
+              "summary=manifest-run-summary.json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+              "diff=manifest-run-diff.json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+              "decision=ci-decision.json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            } else {
+              Write-Host "[aggregate] GITHUB_OUTPUT not available; skipping step outputs"
+            }
           }
 
       - name: Upload manifest diff artifact
@@ -479,9 +483,9 @@ jobs:
         with:
           name: debug-bundle
           path: |
-            manifest-run-summary.json
-            manifest-run-diff.json
-            ci-decision.json
+            ${{ steps.aggregate.outputs.summary }}
+            ${{ steps.aggregate.outputs.diff }}
+            ${{ steps.aggregate.outputs.decision }}
           retention-days: 7
           if-no-files-found: warn
 
