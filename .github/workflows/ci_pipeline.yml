@@ -50,7 +50,15 @@ jobs:
   "version": 1,
   "name": "positive_simulation",
   "timestamp": "2026-04-13T00:00:00Z",
-  "results": [ { "id": "sim1", "status": "pass", "metrics": {} } ]
+  "results": [
+    {
+      "id": "sim1",
+      "status": "DENIED",
+      "decision": "blocked",
+      "reason": "Policy blocked execution during positive simulation fixture generation.",
+      "metrics": {}
+    }
+  ]
 }
 '@ | Out-File -FilePath tools/fixtures/positive_sim.json -Encoding UTF8
           } else {
