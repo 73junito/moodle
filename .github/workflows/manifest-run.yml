@@ -44,13 +44,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download per-manifest validation report
-        if: always()
-        uses: actions/download-artifact@v4
-        with:
-          name: pr-validation-report-${{ matrix.runId }}
-          path: .github/artifacts/${{ matrix.runId }}
-          if-no-files-found: warn
+      # (removed) per-manifest validation downloads belong in run-manifests job
 
       - name: Resolve CI Mode
         id: resolve
@@ -274,6 +268,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Download per-manifest validation report
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-validation-report-${{ matrix.runId }}
+          path: .github/artifacts/${{ matrix.runId }}
+          if-no-files-found: warn
 
       - name: Restore manifest cache (per-run)
         if: false # temporarily disabled to avoid cache-related cancellations during run-manifest
