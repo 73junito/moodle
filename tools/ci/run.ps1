@@ -66,6 +66,7 @@ if ($DryRun) {
         $index = [ordered]@{
             runId = $manifest.runId
             manifest = $ManifestPath
+            manifestPath = (Normalize-PathForIndex -path $ManifestPath)
             timestamp = (Get-Date).ToString('o')
             mode = 'dryrun'
             artifacts = [ordered]@{
@@ -502,6 +503,7 @@ try {
         runId = $manifest.runId
         status = $status
         manifest = (Normalize-PathForIndex -path $ManifestPath)
+        manifestPath = (Normalize-PathForIndex -path $ManifestPath)
         timestamp = (Get-Date).ToString('o')
         attemptCount = $attemptsPerformed
         artifacts = [ordered]@{

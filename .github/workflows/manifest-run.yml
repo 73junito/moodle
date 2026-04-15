@@ -23,6 +23,10 @@ on:
         description: "MANIFEST_VALIDATION_MODE (baseline | strict)"
         required: false
         default: "baseline"
+      trace_runbuilder:
+        description: "Enable TraceRunBuilder in aggregator (true|false)"
+        required: false
+        default: "false"
 
 env:
   # default retention values (days) can be overridden via workflow inputs or secrets later
@@ -394,14 +398,29 @@ jobs:
     needs: run-manifests
     if: always()
     runs-on: ubuntu-latest
+    env:
+      TRACE_RUN_BUILDER: ${{ github.event.inputs.trace_runbuilder }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+
+      - name: Debug aggregator file
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host '--- AGGREGATOR FILE CHECK ---'
+          Write-Host 'Listing:'
+          ls -l tools/ci/aggregate-report.ps1 || echo 'aggregate-report.ps1 not found in tools/ci'
+          Write-Host 'First 40 lines:'
+          if (Test-Path tools/ci/aggregate-report.ps1) { Get-Content tools/ci/aggregate-report.ps1 -TotalCount 40 | ForEach-Object { Write-Host $_ } } else { Write-Host 'file missing' }
 
       - name: Aggregate results
         id: aggregate
@@ -411,24 +430,30 @@ jobs:
           try {
             $shouldWriteBaseline = ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -or $env:GITHUB_REF -eq 'refs/heads/main')
             $args = @('-ArtifactsDir','artifacts','-OutputJson','manifest-run-summary.json','-BaselinePath','.github/cache_manifest/pssa-baseline.json')
+            # respect workflow_dispatch input to enable tracing in CI
+            if ($env:TRACE_RUN_BUILDER -and $env:TRACE_RUN_BUILDER -eq 'true') { $args += '-TraceRunBuilder' }
             if ($shouldWriteBaseline) {
               Write-Host '[aggregate] Running aggregation and writing baseline'
-              pwsh -NoProfile -File tools/ci/aggregate-report.ps1 $args -WriteBaseline
+              pwsh -NoProfile -File "${{ github.workspace }}/tools/ci/aggregate-report.ps1" $args -WriteBaseline
             } else {
               Write-Host '[aggregate] Running aggregation (no baseline write)'
-              pwsh -NoProfile -File tools/ci/aggregate-report.ps1 $args
+              pwsh -NoProfile -File "${{ github.workspace }}/tools/ci/aggregate-report.ps1" $args
             }
           } catch {
             Write-Host "[aggregate] aggregator failed: $($_.Exception.Message)"
-            # Emit minimal contracts so downstream decision engine can run and report
-            $minimal = [ordered]@{
-              passed = 0
-              failed = 0
-              failedRuns = @()
-              pssa = @{ newFindings = 0; existingFindings = 0; resolvedFindings = 0 }
-            }
-            $minimal | ConvertTo-Json -Depth 10 | Set-Content -Path manifest-run-summary.json -Encoding UTF8
+            Write-Host '[aggregate] Emitting empty run-record array to satisfy decision contract'
+            # Contract: decision engine expects an array of run records. Emit an empty array on failure
+            @() | ConvertTo-Json -Depth 10 | Set-Content -Path manifest-run-summary.json -Encoding UTF8
             if (-not (Test-Path 'manifest-run-diff.json')) { '{}' | Out-File -FilePath manifest-run-diff.json -Encoding utf8 }
+          } finally {
+            # Publish the exact filenames we want the uploader to send. Use GITHUB_OUTPUT for step outputs.
+            if ($env:GITHUB_OUTPUT) {
+              "summary=manifest-run-summary.json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+              "diff=manifest-run-diff.json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+              "decision=ci-decision.json" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+            } else {
+              Write-Host "[aggregate] GITHUB_OUTPUT not available; skipping step outputs"
+            }
           }
 
       - name: Upload manifest diff artifact
@@ -458,9 +483,9 @@ jobs:
         with:
           name: debug-bundle
           path: |
-            manifest-run-summary.json
-            manifest-run-diff.json
-            ci-decision.json
+            ${{ steps.aggregate.outputs.summary }}
+            ${{ steps.aggregate.outputs.diff }}
+            ${{ steps.aggregate.outputs.decision }}
           retention-days: 7
           if-no-files-found: warn
 
