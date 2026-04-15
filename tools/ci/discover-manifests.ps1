@@ -1,33 +1,50 @@
 # Helper to discover manifests and emit compact JSON for matrix
 $ErrorActionPreference = 'Stop'
 $items = @()
-## broaden discovery to catch common manifest filename patterns and dedupe
-$patterns = @(
-  '*manifest.json',
-  '*-manifest.json'
-)
 
-$files = @()
-foreach ($p in $patterns) {
-  $files += Get-ChildItem -Path . -Recurse -Filter $p -File -ErrorAction SilentlyContinue
+function Get-IndexManifests {
+  param([string]$root = '.')
+  Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -like '*manifest.json' -or $_.Name -like '*-manifest.json' }
 }
 
-# Also include migrated and runs folders explicitly so generated stubs are discoverable
-$migrationsDir = Join-Path 'tools' 'ci' 'migrations'
-if (Test-Path $migrationsDir) {
-  $files += Get-ChildItem -Path $migrationsDir -Recurse -Filter '*.json' -File -ErrorAction SilentlyContinue
-}
-$runsDir = Join-Path 'tools' 'runs'
-if (Test-Path $runsDir) {
-  $files += Get-ChildItem -Path $runsDir -Recurse -Filter '*.json' -File -ErrorAction SilentlyContinue
-}
-if (Test-Path 'tools' ) {
-  # skip including top-level capability manifest here — it's not a run manifest
-  # capability-manifest.json is an index document and not intended for per-run validation
+function Get-ExecutionManifests {
+  param([string]$root = '.')
+  $dirs = @('tools/ci/migrations','tools/runs')
+  $files = @()
+  foreach ($d in $dirs) {
+    if (Test-Path $d) {
+      $files += Get-ChildItem -Path $d -Recurse -File -ErrorAction SilentlyContinue -Filter '*.json'
+    }
+  }
+  return $files
 }
 
-# Deduplicate and then exclude known artifact filename patterns to avoid treating outputs as manifests
-$files = $files | Sort-Object FullName -Unique | Where-Object { 
+function Test-IsValidManifest {
+  param($json)
+  if (-not $json) { return $false }
+  try {
+    if ($json.PSObject -and $json.PSObject.Properties.Name -contains 'runId') { return $true }
+  } catch {}
+  return $false
+}
+
+function Get-RunId {
+  param($json, $path)
+  try {
+    if ($json -and $json.PSObject -and $json.PSObject.Properties.Name -contains 'runId') {
+      $id = [string]$json.runId
+      if (-not [string]::IsNullOrWhiteSpace($id)) { return $id }
+    }
+  } catch {}
+  # fallback to parent directory name (explicit and deterministic)
+  return (Split-Path -Leaf (Split-Path -Parent $path))
+}
+
+$indexFiles = Get-IndexManifests -root '.'
+$execFiles  = Get-ExecutionManifests -root '.'
+
+$files = @($indexFiles + $execFiles) | Sort-Object FullName -Unique | Where-Object {
   $_.Name -notlike 'validation-report*' -and $_.Name -notlike 'metadata*' -and $_.Name -notlike '*.report*.json' -and $_.Name -ine 'capability-manifest.json'
 }
 
@@ -45,29 +62,11 @@ if ($ciContent -ne '') {
 foreach ($f in $files) {
   $path = $f.FullName
   $manifestDir = Split-Path -Parent $path
-  $runId = $null
-  try {
-    $json = Get-Content $path -Raw | ConvertFrom-Json
-  } catch { $json = $null }
 
-  # Schema-tolerant extraction of runId: some manifests are index-style and may lack IO fields.
-  try {
-    if ($json -and $json.PSObject -and $json.PSObject.Properties.Name -contains 'runId') {
-      $runId = [string]$json.runId
-    }
-  } catch { $json = $null }
+  try { $json = Get-Content $path -Raw | ConvertFrom-Json } catch { $json = $null }
 
-  # Do not treat discovery as strict schema validation. Accept index-style manifests
-  # (runId present) or fall back to the directory name. Capability manifest is still allowed.
-  $isCapability = ($f.Name -ieq 'capability-manifest.json')
-  if (-not $isCapability) {
-    if (-not $runId) {
-      # fallback: use directory name when runId missing (keeps previous behavior but explicit)
-      $runId = Split-Path -Leaf $manifestDir
-    }
-  }
-  # Ensure we always have a runId string
-  if (-not $runId) { $runId = Split-Path -Leaf $manifestDir }
+  $isValid = Test-IsValidManifest $json
+  $runId = Get-RunId $json $path
 
   # compute manifest hash base: manifest content + referenced inputs + ciHash
   $manifestContent = Get-Content $path -Raw
@@ -90,7 +89,13 @@ foreach ($f in $files) {
   elseif ($norm -like '*\tools\runs\*') { $source = 'runs' }
   elseif ($norm -like '*capability-manifest.json') { $source = 'capability' }
 
-  $items += [pscustomobject]@{ path = [string]$path; runId = [string]$runId; hash = [string]$hash; source = [string]$source }
+  $items += [pscustomobject]@{
+    path = [string]$path
+    runId = [string]$runId
+    hash = [string]$hash
+    source = [string]$source
+    valid = [bool]$isValid
+  }
 }
 
 ## Exclude intentionally broken test manifests from discovery
