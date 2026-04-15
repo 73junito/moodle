@@ -366,16 +366,20 @@ foreach ($f in $candidates) {
   # determine runId by parent folder (normalize canonical runId)
   $rawFsRunId = Split-Path -Leaf (Split-Path -Parent $f.FullName)
   $runId = Normalize-RunId $rawFsRunId
-  if ($TraceRunBuilder -and $rawFsRunId -and [string]::IsNullOrWhiteSpace($rawFsRunId)) {       
-    $evt = [ordered]@{ event = 'filesystem_candidate_empty_parent'; stage = 'filesystem-fallback'; path = $f.FullName; reason = 'empty_parent'; timestamp = (Get-Date).ToString('o') }
-    Emit-TraceEvent $ArtifactsDir $evt
-    Write-Host "[trace][runbuilder] filesystem candidate had empty parent; normalized to 'unknown' (structured event emitted)"
+  # skip candidates that do not yield a usable runId
+  if (-not $runId) {
+    if ($TraceRunBuilder) {
+      $evt = [ordered]@{ event = 'filesystem_candidate_skipped'; stage = 'filesystem-fallback'; path = $f.FullName; rawParent = $rawFsRunId; reason = 'no_runId'; timestamp = (Get-Date).ToString('o') }
+      Emit-TraceEvent $ArtifactsDir $evt
+      Write-Host "[trace][runbuilder] filesystem candidate skipped (no usable runId): $($f.FullName)"
+    }
+    continue
   }
   if ($handledRunIds -contains $runId) { continue }
   # Build a minimal fallback run record and mark as skipped (best-effort)
     if (-not ($runRecords | Where-Object { $_.runId -eq $runId })) {
     $fallback = [ordered]@{
-      runId = Normalize-RunId $runId
+      runId = $runId
       manifestPath = $null
       source = 'unknown'
       status = 'skipped'
@@ -391,6 +395,8 @@ foreach ($f in $candidates) {
       validation = [ordered]@{ pre = $null; post = $null }
       pssa = $null
     }
+    # mark as handled so we don't later add another fallback for same id
+    $handledRunIds += $runId
     if ($StrictContract) { $fallback.reason = 'no_index_present' } else { $fallback.reason = 'legacy_no_index_v1' }
     # populate known artifact paths
     if ($f.Name -eq 'metadata.json') { $fallback.artifacts.metadataPath = $f.FullName }
