@@ -133,9 +133,15 @@ function Normalize-RunRecord($r) {
 
 function Compute-Diff($baselineArr, $currentArr) {
   $bmap = @{}
-  foreach ($b in $baselineArr) { $bmap[$b.runId] = $b }
+  foreach ($b in $baselineArr) {
+    $key = if ($null -eq $b.runId -or [string]::IsNullOrWhiteSpace($b.runId)) { 'unknown' } else { $b.runId }
+    $bmap[$key] = $b
+  }
   $cmap = @{}
-  foreach ($c in $currentArr) { $cmap[$c.runId] = $c }
+  foreach ($c in $currentArr) {
+    $key = if ($null -eq $c.runId -or [string]::IsNullOrWhiteSpace($c.runId)) { 'unknown' } else { $c.runId }
+    $cmap[$key] = $c
+  }
 
   $newRuns = @(); $removed = @(); $regressions = @(); $improvements = @(); $unchanged = @()     
 
