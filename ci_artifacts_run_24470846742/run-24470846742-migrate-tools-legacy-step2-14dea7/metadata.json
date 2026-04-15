@@ -1,0 +1,23 @@
+{
+  "runId": "migrate-tools-legacy-step2-14dea7",
+  "manifest": "/home/runner/work/moodle/moodle/tools/ci/migrations/migrate-tools-legacy-step2-14dea7.json",
+  "timestamp": "2026-04-15T18:20:01.8143422+00:00",
+  "status": "success",
+  "exitCode": 0,
+  "errors": [],
+  "attempts": 1,
+  "timeoutHit": false,
+  "retry": null,
+  "attemptsHistory": [
+    {
+      "attempt": 1,
+      "reason": "success",
+      "exitCode": 0,
+      "errors": [],
+      "steps": [],
+      "timestamp": "2026-04-15T18:20:01.7888671+00:00"
+    }
+  ],
+  "inputs": [],
+  "outputs": []
+}

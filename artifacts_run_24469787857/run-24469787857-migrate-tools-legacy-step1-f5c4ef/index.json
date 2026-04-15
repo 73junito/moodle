@@ -1,0 +1,16 @@
+{
+  "runId": "migrate-tools-legacy-step1-f5c4ef",
+  "status": "success",
+  "manifest": "tools/ci/migrations/migrate-tools-legacy-step1-f5c4ef.json",
+  "manifestPath": "tools/ci/migrations/migrate-tools-legacy-step1-f5c4ef.json",
+  "timestamp": "2026-04-15T17:55:44.9201450+00:00",
+  "attemptCount": 1,
+  "artifacts": {
+    "metadata": "metadata.json",
+    "validation": [
+      "validation-report.json"
+    ],
+    "pssa": [],
+    "steps": []
+  }
+}

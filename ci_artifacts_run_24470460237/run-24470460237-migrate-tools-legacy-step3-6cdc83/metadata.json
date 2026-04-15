@@ -1,0 +1,23 @@
+{
+  "runId": "migrate-tools-legacy-step3-6cdc83",
+  "manifest": "/home/runner/work/moodle/moodle/tools/ci/migrations/migrate-tools-legacy-step3-6cdc83.json",
+  "timestamp": "2026-04-15T18:11:05.9764544+00:00",
+  "status": "success",
+  "exitCode": 0,
+  "errors": [],
+  "attempts": 1,
+  "timeoutHit": false,
+  "retry": null,
+  "attemptsHistory": [
+    {
+      "attempt": 1,
+      "reason": "success",
+      "exitCode": 0,
+      "errors": [],
+      "steps": [],
+      "timestamp": "2026-04-15T18:11:05.9628038+00:00"
+    }
+  ],
+  "inputs": [],
+  "outputs": []
+}

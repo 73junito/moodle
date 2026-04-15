@@ -58,6 +58,39 @@ function Get-Prop($obj, $name) {
   } catch { return $null }
 }
 
+# Unified artifact resolver used by both index-driven and filesystem fallback branches
+function Resolve-Artifacts($manifestDir) {
+  $res = [ordered]@{
+    indexPath = $null
+    metadataPath = $null
+    validationPath = $null
+    pssaPath = $null
+    stepsPaths = @()
+    artifactResolutionStatus = 'missing_index'
+  }
+  if (-not $manifestDir) { return $res }
+  try {
+    $index = Join-Path -Path $manifestDir -ChildPath 'index.json'
+    $metadata = Join-Path -Path $manifestDir -ChildPath 'metadata.json'
+    if (Test-Path $index) { $res.indexPath = $index }
+    if (Test-Path $metadata) { $res.metadataPath = $metadata }
+    $v = Get-ChildItem -Path $manifestDir -Filter 'validation-report*.json' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($v) { $res.validationPath = $v.FullName }
+    $p = Get-ChildItem -Path $manifestDir -Filter 'pssa*.json' -File -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($p) { $res.pssaPath = $p.FullName }
+    $stepsDir = Join-Path -Path $manifestDir -ChildPath 'steps'
+    if (Test-Path $stepsDir) { $res.stepsPaths = @(Get-ChildItem -Path $stepsDir -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }) }
+
+    # resolution policy
+    if ($res.indexPath) { $res.artifactResolutionStatus = 'ok' }
+    elseif ($res.metadataPath) { $res.artifactResolutionStatus = 'partial' }
+    else { $res.artifactResolutionStatus = 'missing_index' }
+  } catch {
+    # leave defaults
+  }
+  return $res
+}
+
 Write-Host "[aggregator] Scanning artifacts under: $ArtifactsDir"
 Write-Host "[aggregator] TraceRunBuilder switch = $TraceRunBuilder"
 
@@ -239,8 +272,10 @@ if (Test-Path $ArtifactsDir) {
     if ($idxRunId) { $handledRunIds += $idxRunId }
     Write-Host "[debug] idxRunId resolved from: '$idxRunId' file=$($idxFile.FullName)"
 
-    # canonical artifact keys (always present, explicit null when missing)
-    $metaPath = $null; $validationPath = $null; $pssaPath = $null; $stepsPaths = @()
+    # Use unified resolver to find artifacts next to the index file
+    $resolved = Resolve-Artifacts $parent
+    $metaPath = $resolved.metadataPath; $validationPath = $resolved.validationPath; $pssaPath = $resolved.pssaPath; $stepsPaths = $resolved.stepsPaths
+    # prefer explicit artifacts declared inside index.json when present
     if (Get-Prop $idx 'artifacts') {
       $a = Get-Prop $idx 'artifacts'
       if (Get-Prop $a 'metadata') { $metaPath = Get-Prop $a 'metadata' }
@@ -324,6 +359,7 @@ if (Test-Path $ArtifactsDir) {
           pssaPath = $pssaPath
           stepsPaths = $stepsPaths
         }
+        artifactResolutionStatus = $resolved.artifactResolutionStatus
         validation = [ordered]@{ pre = $null; post = $null }
         pssa = $null
       }
@@ -347,6 +383,14 @@ if (Test-Path $ArtifactsDir) {
       $status = $idxStatus
     }
 
+    # compute artifact resolution status (explicit) for visibility
+    $missing = @()
+    if (-not $metaPath) { $missing += 'metadata' }
+    if (-not $validationPath) { $missing += 'validation' }
+    if (-not $pssaPath) { $missing += 'pssa' }
+    if (-not $stepsPaths -or $stepsPaths.Count -eq 0) { $missing += 'steps' }
+    $artifactResolutionStatus = if ($missing.Count -gt 0) { 'missing:' + ($missing -join ',') } else { 'complete' }
+
     $record = [ordered]@{
       # Use the resolved runId determined earlier and keep it immutable for this record
       runId = $idxRunId
@@ -363,6 +407,7 @@ if (Test-Path $ArtifactsDir) {
         pssaPath = $pssaPath
         stepsPaths = $stepsPaths
       }
+      artifactResolutionStatus = $artifactResolutionStatus
       validation = [ordered]@{ pre = $null; post = $null }
       pssa = $null
     }
@@ -393,6 +438,9 @@ foreach ($f in $candidates) {
   if ($handledRunIds -contains $runId) { continue }
   # Build a minimal fallback run record and mark as skipped (best-effort)
     if (-not ($runRecords | Where-Object { $_.runId -eq $runId })) {
+    # Use unified resolver to populate artifact paths for filesystem-derived candidates
+    $manifestDir = Split-Path -Parent $f.FullName
+    $resolved = Resolve-Artifacts $manifestDir
     $fallback = [ordered]@{
       runId = $runId
       runIdResolved = $false
@@ -402,12 +450,13 @@ foreach ($f in $candidates) {
       attemptCount = 0
       reason = $null
       artifacts = [ordered]@{
-        indexPath = $null
-        metadataPath = $null
-        validationPath = $null
-        pssaPath = $null
-        stepsPaths = @()
+        indexPath = $resolved.indexPath
+        metadataPath = $resolved.metadataPath
+        validationPath = $resolved.validationPath
+        pssaPath = $resolved.pssaPath
+        stepsPaths = $resolved.stepsPaths
       }
+      artifactResolutionStatus = $resolved.artifactResolutionStatus
       validation = [ordered]@{ pre = $null; post = $null }
       pssa = $null
     }
@@ -497,6 +546,27 @@ foreach ($r in $runRecords) {
     $record.artifacts = $artObj
   }
 
+  # If a manifestPath exists, attempt to resolve artifacts relative to it
+  try {
+    $mp = Get-CanonicalValue $record 'manifestPath'
+    if ($mp) {
+      $manifestDir = $null
+      if (Test-Path $mp) { $manifestDir = Split-Path -Parent $mp } else { $manifestDir = Join-Path -Path $workspaceRoot -ChildPath (Split-Path -Parent $mp) }
+      $resolvedFromManifest = Resolve-Artifacts $manifestDir
+      # Merge only into missing artifact fields
+      $rArt = Get-Prop $record 'artifacts'
+      if ($rArt) {
+        if (-not (Get-Prop $rArt 'indexPath') -or -not $rArt.indexPath) { $rArt.indexPath = $resolvedFromManifest.indexPath }
+        if (-not (Get-Prop $rArt 'metadataPath') -or -not $rArt.metadataPath) { $rArt.metadataPath = $resolvedFromManifest.metadataPath }
+        if (-not (Get-Prop $rArt 'validationPath') -or -not $rArt.validationPath) { $rArt.validationPath = $resolvedFromManifest.validationPath }
+        if (-not (Get-Prop $rArt 'pssaPath') -or -not $rArt.pssaPath) { $rArt.pssaPath = $resolvedFromManifest.pssaPath }
+        if (-not (Get-Prop $rArt 'stepsPaths') -or -not $rArt.stepsPaths -or $rArt.stepsPaths.Count -eq 0) { $rArt.stepsPaths = $resolvedFromManifest.stepsPaths }
+        $record.artifacts = $rArt
+      }
+      if (-not (Get-Prop $record 'artifactResolutionStatus')) { $record.artifactResolutionStatus = $resolvedFromManifest.artifactResolutionStatus }
+    }
+  } catch { }
+
   # Final validation: ensure runId is present; if not, set explicit unresolved marker
   # attempt to recover runId from nested SyncRoot (some PSObject shapes embed original values)
   if (-not (Get-Prop $record 'runId')) {
@@ -555,6 +625,11 @@ function Get-CanonicalValue($r, $name) {
 $cleanRecords = @()
 foreach ($r in $runRecords) {
   $artObj = Get-CanonicalValue $r 'artifacts'
+  # If artifacts missing at top-level, try SyncRoot fallback (some records are stored inside SyncRoot)
+  if (-not $artObj) {
+    try { $sr = $r.SyncRoot } catch { $sr = $null }
+    if ($sr -and (Get-Prop $sr 'artifacts')) { $artObj = Get-Prop $sr 'artifacts' }
+  }
   $cleanArt = [ordered]@{
     indexPath = if ($artObj -and (Get-Prop $artObj 'indexPath')) { Get-Prop $artObj 'indexPath' } else { $null }
     metadataPath = if ($artObj -and (Get-Prop $artObj 'metadataPath')) { Get-Prop $artObj 'metadataPath' } else { $null }
@@ -577,6 +652,7 @@ foreach ($r in $runRecords) {
     attemptHistory = if (Get-CanonicalValue $r 'attemptHistory') { Get-CanonicalValue $r 'attemptHistory' } else { @() }
     reason = if (Get-CanonicalValue $r 'reason') { Get-CanonicalValue $r 'reason' } else { $null }
     artifacts = $cleanArt
+    artifactResolutionStatus = if (Get-CanonicalValue $r 'artifactResolutionStatus') { Get-CanonicalValue $r 'artifactResolutionStatus' } else { (try { $sr = $r.SyncRoot; if ($sr -and (Get-Prop $sr 'artifactResolutionStatus')) { Get-Prop $sr 'artifactResolutionStatus' } else { $null } } catch { $null }) }
     validation = if (Get-CanonicalValue $r 'validation') { Get-CanonicalValue $r 'validation' } else { [ordered]@{ pre = $null; post = $null } }
     pssa = if (Get-CanonicalValue $r 'pssa') { Get-CanonicalValue $r 'pssa' } else { $null }
   }
@@ -586,6 +662,109 @@ foreach ($r in $runRecords) {
 
 # Replace runRecords with the clean projection for final serialization
 $runRecords = $cleanRecords
+
+# Single final normalization: ensure every record passes through one canonical
+# enforcement point so no branch can bypass artifact resolution or shaping.
+function Normalize-FinalRecord {
+  param($r)
+
+  # canonical basic fields
+  $runId = Normalize-RunId (Get-CanonicalValue $r 'runId')
+  $runIdResolved = Get-CanonicalValue $r 'runIdResolved'
+  if ($runIdResolved -eq $null) { $runIdResolved = $false }
+  $manifestPath = Get-CanonicalValue $r 'manifestPath'
+  $source = if (Get-CanonicalValue $r 'source') { Get-CanonicalValue $r 'source' } else { 'unknown' }
+  $status = if (Get-CanonicalValue $r 'status') { (Get-CanonicalValue $r 'status').ToString().ToLower() } else { 'skipped' }
+  $attemptCount = if ((Get-CanonicalValue $r 'attemptCount') -ne $null) { try { [int](Get-CanonicalValue $r 'attemptCount') } catch { 0 } } else { 0 }
+  $attemptHistory = if (Get-CanonicalValue $r 'attemptHistory') { Get-CanonicalValue $r 'attemptHistory' } else { @() }
+  $reason = if (Get-CanonicalValue $r 'reason') { Get-CanonicalValue $r 'reason' } else { $null }
+
+  # existing artifact object (if any)
+  $existingArt = Get-CanonicalValue $r 'artifacts'
+
+  # determine manifest directory to resolve artifacts (prefer manifestPath, then indexPath)
+  $manifestDir = $null
+  try {
+    if ($manifestPath -and (Test-Path $manifestPath)) { $manifestDir = Split-Path -Parent $manifestPath }
+    elseif ($existingArt -and (Get-Prop $existingArt 'indexPath') -and $existingArt.indexPath -and (Test-Path $existingArt.indexPath) ) { $manifestDir = Split-Path -Parent $existingArt.indexPath }
+    elseif ($manifestPath) { # manifestPath may be relative; try resolving from workspace
+      $cand = Join-Path -Path $workspaceRoot -ChildPath $manifestPath
+      if (Test-Path $cand) { $manifestDir = Split-Path -Parent $cand }
+    }
+  } catch { $manifestDir = $null }
+
+  $resolved = Resolve-Artifacts $manifestDir
+
+  # decide artifactResolutionStatus: map to user-expected values
+  $ars = 'missing_index'
+  if ($resolved.indexPath -and $resolved.metadataPath) { $ars = 'ok' }
+  elseif ($resolved.indexPath -or $resolved.metadataPath -or $resolved.validationPath) { $ars = 'partial' }
+
+  # build artifacts object preferring existing values then falling back to resolved
+  $art = [ordered]@{
+    indexPath = $null
+    metadataPath = $null
+    validationPath = $null
+    pssaPath = $null
+    stepsPaths = @()
+  }
+  if ($existingArt) {
+    if (Get-Prop $existingArt 'indexPath') { $art.indexPath = $existingArt.indexPath }
+    if (Get-Prop $existingArt 'metadataPath') { $art.metadataPath = $existingArt.metadataPath }
+    if (Get-Prop $existingArt 'validationPath') { $art.validationPath = $existingArt.validationPath }
+    if (Get-Prop $existingArt 'pssaPath') { $art.pssaPath = $existingArt.pssaPath }
+    if (Get-Prop $existingArt 'stepsPaths') { $art.stepsPaths = @($existingArt.stepsPaths) }
+  }
+  if (-not $art.indexPath -and $resolved.indexPath) { $art.indexPath = $resolved.indexPath }
+  if (-not $art.metadataPath -and $resolved.metadataPath) { $art.metadataPath = $resolved.metadataPath }
+  if (-not $art.validationPath -and $resolved.validationPath) { $art.validationPath = $resolved.validationPath }
+  if (-not $art.pssaPath -and $resolved.pssaPath) { $art.pssaPath = $resolved.pssaPath }
+  if ((-not $art.stepsPaths -or $art.stepsPaths.Count -eq 0) -and $resolved.stepsPaths) { $art.stepsPaths = $resolved.stepsPaths }
+
+  # preserve validation and pssa blocks when present
+  $validation = if (Get-CanonicalValue $r 'validation') { Get-CanonicalValue $r 'validation' } else { [ordered]@{ pre = $null; post = $null } }
+  $pssa = if (Get-CanonicalValue $r 'pssa') { Get-CanonicalValue $r 'pssa' } else { $null }
+
+  # produce a clean PSCustomObject for final emission
+  $out = [PSCustomObject]@{
+    runId = if ($runId) { $runId } else { 'unknown' }
+    runIdResolved = [bool]$runIdResolved
+    manifestPath = $manifestPath
+    source = $source
+    status = $status
+    attemptCount = $attemptCount
+    attemptHistory = $attemptHistory
+    reason = $reason
+    artifacts = $art
+    artifactResolutionStatus = $ars
+    validation = $validation
+    pssa = $pssa
+  }
+  try {
+    $evt = [ordered]@{ event = 'normalize_final'; runId = $out.runId; artifactResolutionStatus = $out.artifactResolutionStatus; manifestPath = $out.manifestPath; timestamp = (Get-Date).ToString('o') }
+    Emit-TraceEvent $ArtifactsDir $evt
+  } catch { }
+  return $out
+}
+
+# Enforce normalization for every record
+$finalNormalized = @()
+foreach ($r in $runRecords) { $finalNormalized += Normalize-FinalRecord $r }
+$runRecords = $finalNormalized
+
+# Post-process: ensure artifact keys and artifactResolutionStatus are explicit for all records
+foreach ($r in $runRecords) {
+  if (-not (Get-Prop $r 'artifacts')) {
+    if ($r -is [System.Collections.IDictionary]) { $r['artifacts'] = [ordered]@{ indexPath=$null; metadataPath=$null; validationPath=$null; pssaPath=$null; stepsPaths=@() } } else { $r.artifacts = [ordered]@{ indexPath=$null; metadataPath=$null; validationPath=$null; pssaPath=$null; stepsPaths=@() } }
+  }
+  if (-not (Get-Prop $r 'artifactResolutionStatus')) {
+    $art = Get-Prop $r 'artifacts'
+    $statusVal = 'missing_index'
+    if ($art -and (Get-Prop $art 'indexPath') -and $art.indexPath) { $statusVal = 'ok' }
+    elseif ($art -and ((Get-Prop $art 'metadataPath') -or (Get-Prop $art 'validationPath')) -and (($art.metadataPath) -or ($art.validationPath))) { $statusVal = 'partial' }
+    if ($r -is [System.Collections.IDictionary]) { $r['artifactResolutionStatus'] = $statusVal } else { $r.artifactResolutionStatus = $statusVal }
+  }
+}
 
 # Invariant checks: fail fast if we detect regressions that violate contract
 $badResolvedUnknown = @($runRecords | Where-Object { $_.runId -eq 'unknown' -and $_.runIdResolved -eq $true })
@@ -665,7 +844,62 @@ if ($StrictContract) {
   }
 
   # Write canonical JSON array only
-  ($runRecords | ConvertTo-Json -Depth 10) | Set-Content -Path $OutputJson -Encoding UTF8 -Force
-  Write-Host "Wrote canonical run records: $OutputJson"
+  # Final enforcement: ensure every record is normalized through the single canonical projection
+  $finalNormalized = @()
+  foreach ($r in $runRecords) { $finalNormalized += Normalize-FinalRecord $r }
+  $runRecords = $finalNormalized
+
+  # Build explicit emission objects to avoid accidental property-dropping by intermediate conversions
+  $emitRecords = @()
+  foreach ($r in $runRecords) {
+    $art = if (Get-CanonicalValue $r 'artifacts') { Get-CanonicalValue $r 'artifacts' } else { [ordered]@{ indexPath=$null; metadataPath=$null; validationPath=$null; pssaPath=$null; stepsPaths=@() } }
+    $ars = if (Get-CanonicalValue $r 'artifactResolutionStatus') { Get-CanonicalValue $r 'artifactResolutionStatus' } else { (try { $sr = if (Get-CanonicalValue $r 'SyncRoot') { Get-CanonicalValue $r 'SyncRoot' } else { $null }; if ($sr -and (Get-Prop $sr 'artifactResolutionStatus')) { Get-Prop $sr 'artifactResolutionStatus' } else { 'missing_index' } } catch { 'missing_index' }) }
+    $emit = [ordered]@{
+      runId = Get-CanonicalValue $r 'runId'
+      runIdResolved = if ((Get-CanonicalValue $r 'runIdResolved') -ne $null) { [bool](Get-CanonicalValue $r 'runIdResolved') } else { $false }
+      manifestPath = Get-CanonicalValue $r 'manifestPath'
+      source = if (Get-CanonicalValue $r 'source') { Get-CanonicalValue $r 'source' } else { 'unknown' }
+      status = if (Get-CanonicalValue $r 'status') { (Get-CanonicalValue $r 'status').ToString().ToLower() } else { 'skipped' }
+      attemptCount = if ((Get-CanonicalValue $r 'attemptCount') -ne $null) { try { [int](Get-CanonicalValue $r 'attemptCount') } catch { 0 } } else { 0 }
+      attemptHistory = if (Get-CanonicalValue $r 'attemptHistory') { Get-CanonicalValue $r 'attemptHistory' } else { $null }
+      reason = if (Get-CanonicalValue $r 'reason') { Get-CanonicalValue $r 'reason' } else { $null }
+      artifacts = $art
+      artifactResolutionStatus = $ars
+      validation = if (Get-CanonicalValue $r 'validation') { Get-CanonicalValue $r 'validation' } else { [ordered]@{ pre = $null; post = $null } }
+      pssa = if (Get-CanonicalValue $r 'pssa') { Get-CanonicalValue $r 'pssa' } else { $null }
+    }
+    $emitRecords += $emit
+  }
+
+  # Debug: also write an unambiguous final-debug file for inspection
+  $finalDebugOut = Join-Path $ArtifactsDir 'manifest-run-final-debug.json'
+  try { ($emitRecords | ConvertTo-Json -Depth 10 -Compress) | Set-Content -Path $finalDebugOut -Encoding UTF8 -Force } catch { }
+
+  $jsonOut = ($emitRecords | ConvertTo-Json -Depth 10)
+  # atomic write: write to temp then move into place to avoid partial reads
+  try {
+    $tmpRoot = if ($env:TEMP) { $env:TEMP } else { Join-Path (Get-Location).Path 'tmp' }
+    if (-not (Test-Path $tmpRoot)) { New-Item -ItemType Directory -Path $tmpRoot -Force | Out-Null }
+    $tmpFile = Join-Path $tmpRoot ([System.IO.Path]::GetRandomFileName() + '.json')
+    $jsonOut | Set-Content -Path $tmpFile -Encoding UTF8 -Force
+
+    # write primary summary (root path) atomically
+    if (Test-Path $OutputJson) { Remove-Item -Path $OutputJson -Force -ErrorAction SilentlyContinue }
+    Move-Item -Path $tmpFile -Destination $OutputJson -Force
+    Write-Host "Wrote canonical run records: $OutputJson"
+
+    # also ensure canonical copy exists in artifacts dir (single source for CI consumers)
+    $artSummary = Join-Path -Path $ArtifactsDir -ChildPath 'manifest-run-summary.json'
+    $tmpFile2 = Join-Path $tmpRoot ([System.IO.Path]::GetRandomFileName() + '.json')
+    $jsonOut | Set-Content -Path $tmpFile2 -Encoding UTF8 -Force
+    if (Test-Path $artSummary) { Remove-Item -Path $artSummary -Force -ErrorAction SilentlyContinue }
+    Move-Item -Path $tmpFile2 -Destination $artSummary -Force
+    Write-Host "Wrote canonical run records (artifacts): $artSummary"
+  } catch {
+    Write-Host "[warning] failed atomic write: $($_.Exception.Message)"
+    # fallback to best-effort write
+    try { $jsonOut | Set-Content -Path $OutputJson -Encoding UTF8 -Force } catch { }
+    try { $jsonOut | Set-Content -Path (Join-Path $ArtifactsDir 'manifest-run-summary.json') -Encoding UTF8 -Force } catch { }
+  }
 
   Write-Host '[aggregator] Complete.'

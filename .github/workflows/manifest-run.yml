@@ -422,6 +422,14 @@ jobs:
           Write-Host 'First 40 lines:'
           if (Test-Path tools/ci/aggregate-report.ps1) { Get-Content tools/ci/aggregate-report.ps1 -TotalCount 40 | ForEach-Object { Write-Host $_ } } else { Write-Host 'file missing' }
 
+      - name: Clean stale summary artifacts
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $paths = @( 'manifest-run-summary.json', '.github/artifacts/manifest-run-summary.json', '.github/artifacts/manifest-run-final-debug.json' )
+          foreach ($p in $paths) { if (Test-Path $p) { Remove-Item -Path $p -Force -Recurse -ErrorAction SilentlyContinue } }
+
       - name: Aggregate results
         id: aggregate
         shell: pwsh
@@ -462,6 +470,13 @@ jobs:
         with:
           name: manifest-run-diff
           path: manifest-run-diff.json
+
+      - name: Validate emission consistency
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          pwsh -NoProfile -File tools/ci/tests/validate_final_emission.ps1 -FinalDebug '.github/artifacts/manifest-run-final-debug.json' -Summary 'manifest-run-summary.json'
 
       # debug bundle moved below to capture ci-decision.json
 
