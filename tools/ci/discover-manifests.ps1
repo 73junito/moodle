@@ -37,14 +37,17 @@ function Get-RunId {
       if (-not [string]::IsNullOrWhiteSpace($id)) { return $id }
     }
   } catch {}
-  # fallback to parent directory name (explicit and deterministic)
-  return (Split-Path -Leaf (Split-Path -Parent $path))
+  # unresolved: do not fabricate a runId here
+  return $null
 }
 
 $indexFiles = Get-IndexManifests -root '.'
 $execFiles  = Get-ExecutionManifests -root '.'
 
-$files = @($indexFiles + $execFiles) | Sort-Object FullName -Unique | Where-Object {
+$files = @()
+if ($indexFiles) { $files += $indexFiles }
+if ($execFiles)  { $files += $execFiles }
+$files = $files | Sort-Object FullName -Unique | Where-Object {
   $_.Name -notlike 'validation-report*' -and $_.Name -notlike 'metadata*' -and $_.Name -notlike '*.report*.json' -and $_.Name -ine 'capability-manifest.json'
 }
 
@@ -67,6 +70,8 @@ foreach ($f in $files) {
 
   $isValid = Test-IsValidManifest $json
   $runId = Get-RunId $json $path
+  # If runId unresolved, skip emitting (avoid fabricating parent-dir ids that collide)
+  if (-not $runId) { continue }
 
   # compute manifest hash base: manifest content + referenced inputs + ciHash
   $manifestContent = Get-Content $path -Raw
