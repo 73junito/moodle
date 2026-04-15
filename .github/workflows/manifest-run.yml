@@ -398,9 +398,14 @@ jobs:
     needs: run-manifests
     if: always()
     runs-on: ubuntu-latest
+    env:
+      TRACE_RUN_BUILDER: ${{ github.event.inputs.trace_runbuilder }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
