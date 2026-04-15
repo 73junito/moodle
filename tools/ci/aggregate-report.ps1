@@ -122,12 +122,14 @@ function Normalize-RunRecord($r) {
 function Compute-Diff($baselineArr, $currentArr) {
   $bmap = @{}
   foreach ($b in $baselineArr) {
-    $key = if ($null -eq $b.runId -or [string]::IsNullOrWhiteSpace($b.runId)) { 'unknown' } else { $b.runId }
+    $bid = Get-CanonicalValue $b 'runId'
+    $key = if (-not $bid -or [string]::IsNullOrWhiteSpace([string]$bid)) { 'unknown' } else { [string]$bid }
     $bmap[$key] = $b
   }
   $cmap = @{}
   foreach ($c in $currentArr) {
-    $key = if ($null -eq $c.runId -or [string]::IsNullOrWhiteSpace($c.runId)) { 'unknown' } else { $c.runId }
+    $cid = Get-CanonicalValue $c 'runId'
+    $key = if (-not $cid -or [string]::IsNullOrWhiteSpace([string]$cid)) { 'unknown' } else { [string]$cid }
     $cmap[$key] = $c
   }
 
