@@ -1,0 +1,7 @@
+{
+  "DiffMode": "report",
+  "PSSAMode": "baseline",
+  "ValidationMode": "baseline",
+  "Label": "dev",
+  "Grade": "low"
+}

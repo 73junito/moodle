@@ -1,30 +1,29 @@
-# === block massive dirs ===
+# === sandbox runtime outputs ===
 sandbox_artifacts/
 installer_extracted/
-public/
 payload_out/
 exported-sandbox-artifacts/
-
-# === generic data ===
-*.csv
-*.tsv
-*.jsonl
-*.zip
-*.bin
 
 # === logs / temp ===
 *.log
 *.tmp
 *.cache
 
-# === runs ===
-# Ignore generated outputs
-tools/runs/output/
-**/runs/
+# === CI runtime outputs ONLY ===
+# These are runtime artifacts and must not be committed.
+manifest-run-summary.json
+manifest-run-diff.json
+ci-decision.json
+out.json
+test-ci-decision.json
+.github/artifacts/
 
-# Allow committed inputs/fixtures
-!/tools/runs/input/
-!/tools/runs/input/*
+# === run outputs (scoped) ===
+**/output/
+**/artifacts/
+
+# === fixtures (always keep tracked fixtures)
+!tools/fixtures/
 
 # local OS VCS/temp
 .DS_Store

@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "runId": "example_run_001",
+  "timestamp": "2026-04-13T00:00:00Z",
+  "inputs": [
+    "positive_sim.json"
+  ],
+  "outputs": [
+    "ir_validation_report.json",
+    "ir_validation_compare.json",
+    "metadata.json"
+  ],
+  "metadata": {
+    "description": "Example manifest for a deterministic run"
+  }
+}

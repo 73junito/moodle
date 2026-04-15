@@ -27,16 +27,24 @@ jobs:
         shell: pwsh
         run: pwsh -NoProfile -File tools/ci/ci_validate_no_implicit_paths.ps1 -Root .
 
+      - name: Validate no committed run outputs
+        shell: pwsh
+        run: pwsh -NoProfile -File tools/ci/ci_validate_no_run_outputs.ps1
+
+      - name: Validate run schema (whitelist)
+        shell: pwsh
+        run: pwsh -NoProfile -File tools/ci/ci_validate_run_schema.ps1
+
       - name: Setup Ollama (verified download)
         shell: pwsh
         run: pwsh -NoProfile -File tools/ci/ci_ollama_writable.ps1 -RunInstaller:$false
 
-      - name: Ensure runs directory and simulation report
+      - name: Ensure fixture exists
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force tools/runs | Out-Null
-          if (-Not (Test-Path -Path tools/runs/positive_sim.json)) {
-            Write-Host "Creating placeholder tools/runs/positive_sim.json"
+          New-Item -ItemType Directory -Force tools/fixtures | Out-Null
+          if (-Not (Test-Path -Path tools/fixtures/positive_sim.json)) {
+            Write-Host "Creating placeholder tools/fixtures/positive_sim.json"
             @'
 {
   "version": 1,
@@ -52,9 +60,9 @@ jobs:
     }
   ]
 }
-'@ | Out-File -FilePath tools/runs/positive_sim.json -Encoding UTF8
+'@ | Out-File -FilePath tools/fixtures/positive_sim.json -Encoding UTF8
           } else {
-            Write-Host "tools/runs/positive_sim.json already present"
+            Write-Host "tools/fixtures/positive_sim.json already present"
           }
 
       - name: Run deterministic CI runner
@@ -62,7 +70,7 @@ jobs:
         run: |
           pwsh -NoProfile -File tools/ci_compare_self_heal.ps1 `
             -PolicyXml tools/tests/sample_inspect.xml `
-            -SimulationReport tools/runs/positive_sim.json `
+            -SimulationReport tools/fixtures/positive_sim.json `
             -OutDir tools/runs `
             -FailOnDivergence:$false `
             -RunId "${{ github.run_id }}-${{ github.sha }}"
