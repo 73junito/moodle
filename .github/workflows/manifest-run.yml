@@ -412,6 +412,16 @@ jobs:
         with:
           path: artifacts
 
+      - name: Debug aggregator file
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host '--- AGGREGATOR FILE CHECK ---'
+          Write-Host 'Listing:'
+          ls -l tools/ci/aggregate-report.ps1 || echo 'aggregate-report.ps1 not found in tools/ci'
+          Write-Host 'First 40 lines:'
+          if (Test-Path tools/ci/aggregate-report.ps1) { Get-Content tools/ci/aggregate-report.ps1 -TotalCount 40 | ForEach-Object { Write-Host $_ } } else { Write-Host 'file missing' }
+
       - name: Aggregate results
         id: aggregate
         shell: pwsh
@@ -424,10 +434,10 @@ jobs:
             if ($env:TRACE_RUN_BUILDER -and $env:TRACE_RUN_BUILDER -eq 'true') { $args += '-TraceRunBuilder' }
             if ($shouldWriteBaseline) {
               Write-Host '[aggregate] Running aggregation and writing baseline'
-              pwsh -NoProfile -File tools/ci/aggregate-report.ps1 $args -WriteBaseline
+              pwsh -NoProfile -File "${{ github.workspace }}/tools/ci/aggregate-report.ps1" $args -WriteBaseline
             } else {
               Write-Host '[aggregate] Running aggregation (no baseline write)'
-              pwsh -NoProfile -File tools/ci/aggregate-report.ps1 $args
+              pwsh -NoProfile -File "${{ github.workspace }}/tools/ci/aggregate-report.ps1" $args
             }
           } catch {
             Write-Host "[aggregate] aggregator failed: $($_.Exception.Message)"
