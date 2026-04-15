@@ -500,11 +500,11 @@ try {
 
     $index = [ordered]@{
         runId = $manifest.runId
-        manifest = $ManifestPath
+        manifest = (Normalize-PathForIndex -path $ManifestPath)
         timestamp = (Get-Date).ToString('o')
         attemptCount = $attemptsPerformed
         artifacts = [ordered]@{
-            metadata = $metaPath
+            metadata = (Normalize-PathForIndex -path $metaPath)
             validation = @($validationFiles | Select-Object -Unique)
             pssa = @($pssaFiles | Select-Object -Unique)
             steps = @($stepFiles | Select-Object -Unique)
