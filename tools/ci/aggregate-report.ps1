@@ -138,7 +138,16 @@ function Compute-Diff($baselineArr, $currentArr) {
   # new and changed
   foreach ($runId in $cmap.Keys) {
     if (-not $bmap.ContainsKey($runId)) {
-      $newRuns += $cmap[$runId]
+      $src = $cmap[$runId]
+      $plainNew = [PSCustomObject]@{
+        runId = Get-CanonicalValue $src 'runId'
+        runIdResolved = if ((Get-CanonicalValue $src 'runIdResolved') -ne $null) { [bool](Get-CanonicalValue $src 'runIdResolved') } else { $false }
+        manifestPath = Get-CanonicalValue $src 'manifestPath'
+        source = if (Get-CanonicalValue $src 'source') { Get-CanonicalValue $src 'source' } else { 'unknown' }
+        status = if (Get-CanonicalValue $src 'status') { (Get-CanonicalValue $src 'status').ToString().ToLower() } else { 'skipped' }
+        artifacts = if (Get-CanonicalValue $src 'artifacts') { Get-CanonicalValue $src 'artifacts' } else { [ordered]@{ indexPath=$null; metadataPath=$null; validationPath=$null; pssaPath=$null; stepsPaths=@() } }
+      }
+      $newRuns += $plainNew
       continue
     }
     $cur = $cmap[$runId]; $base = $bmap[$runId]
@@ -179,7 +188,18 @@ function Compute-Diff($baselineArr, $currentArr) {
 
   # removed runs
   foreach ($runId in $bmap.Keys) {
-    if (-not $cmap.ContainsKey($runId)) { $removed += $bmap[$runId] }
+    if (-not $cmap.ContainsKey($runId)) {
+      $src = $bmap[$runId]
+      $plainRem = [PSCustomObject]@{
+        runId = Get-CanonicalValue $src 'runId'
+        runIdResolved = if ((Get-CanonicalValue $src 'runIdResolved') -ne $null) { [bool](Get-CanonicalValue $src 'runIdResolved') } else { $false }
+        manifestPath = Get-CanonicalValue $src 'manifestPath'
+        source = if (Get-CanonicalValue $src 'source') { Get-CanonicalValue $src 'source' } else { 'unknown' }
+        status = if (Get-CanonicalValue $src 'status') { (Get-CanonicalValue $src 'status').ToString().ToLower() } else { 'skipped' }
+        artifacts = if (Get-CanonicalValue $src 'artifacts') { Get-CanonicalValue $src 'artifacts' } else { [ordered]@{ indexPath=$null; metadataPath=$null; validationPath=$null; pssaPath=$null; stepsPaths=@() } }
+      }
+      $removed += $plainRem
+    }
   }
 
   $summary = [ordered]@{
