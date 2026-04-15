@@ -24,6 +24,20 @@ function Normalize-RunId($id) {
   } catch { return $null }
 }
 
+# Resolve canonical runId for an index record with optional fallback.
+function Get-CanonicalRunId($Index, $FallbackRunId) {
+  if ($null -ne $Index) {
+    $v = Get-Prop $Index 'runId'
+    if (-not $v) { $v = Get-Prop $Index 'run_id' }
+    if (-not $v) { $v = Get-Prop $Index 'id' }
+    try {
+      if ($v -and -not [string]::IsNullOrWhiteSpace($v.ToString())) { return $v.ToString().Trim() }
+    } catch { }
+  }
+  if ($FallbackRunId -and -not [string]::IsNullOrWhiteSpace($FallbackRunId.ToString())) { return $FallbackRunId.ToString().Trim() }
+  return $null
+}
+
 # Emit structured trace events (JSONL) when enabled
 function Emit-TraceEvent($ArtifactsDir, $eventObj) {
   try {
@@ -221,15 +235,13 @@ if (Test-Path $ArtifactsDir) {
   foreach ($idxFile in @($indexFiles)) {
     $idx = Read-JsonFile $idxFile.FullName
     if ($null -eq $idx) { continue }
-    # tolerate multiple index schemas: runId, run_id, id, then fallback to parent folder name
-    $rawRunId = $null
-    if (Get-Prop $idx 'runId') { $rawRunId = Get-Prop $idx 'runId' }
-    elseif (Get-Prop $idx 'run_id') { $rawRunId = Get-Prop $idx 'run_id' }
-    elseif (Get-Prop $idx 'id') { $rawRunId = Get-Prop $idx 'id' }
-    else { $rawRunId = Split-Path -Leaf (Split-Path -Parent $idxFile.FullName) }
-    $runId = Normalize-RunId $rawRunId
-    if ($runId) { $handledRunIds += $runId }
-    Write-Host "[debug] idxRunId resolved from: '$rawRunId' file=$($idxFile.FullName)"
+    # Resolve canonical runId (index-first, schema-tolerant, fallback to parent folder)
+    $parent = Split-Path -Parent $idxFile.FullName
+    $parentLeaf = Split-Path -Leaf $parent
+    $idxRunIdRaw = Get-CanonicalRunId $idx $parentLeaf
+    $idxRunId = Normalize-RunId $idxRunIdRaw
+    if ($idxRunId) { $handledRunIds += $idxRunId }
+    Write-Host "[debug] idxRunId resolved from: '$idxRunId' file=$($idxFile.FullName)"
 
     # canonical artifact keys (always present, explicit null when missing)
     $metaPath = $null; $validationPath = $null; $pssaPath = $null; $stepsPaths = @()
@@ -247,28 +259,31 @@ if (Test-Path $ArtifactsDir) {
     $idxStatus = if ($idxStatusRaw) { $idxStatusRaw.ToString().ToLower() } else { $null }       
     $idxManifest = Get-Prop $idx 'manifest'
     # reuse the schema-tolerant resolution performed earlier
-    $idxRunIdRaw = $rawRunId
-    $idxRunId = $runId
     $reason = $null
     if ($TraceRunBuilder) {
       Write-Host "[trace-debug] idxFile=$($idxFile.FullName) idxRunIdRaw='$idxRunIdRaw' idxManifest='$idxManifest' idxStatus='$idxStatus' metaPath='$metaPath' validationPath='$validationPath'"
     }
 
-    # Guard: if runId is missing or empty even after fallback, emit an explicit skipped record and continue
+    # Guard: if runId is missing or empty even after fallback, emit an explicit
+    # unresolved record rather than silently dropping the data. This preserves
+    # traceability while still marking the identity as unresolved.
     if (-not $idxRunId) {
-      $src = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }
       if ($TraceRunBuilder) {
-        $evt = [ordered]@{ event = 'index_missing_runId'; stage = 'index-fallback'; path = $idxFile.FullName; manifest = $idxManifest; source = $src; reason = 'missing_runId'; timestamp = (Get-Date).ToString('o') }
+        $evt = [ordered]@{ event = 'index_missing_runId'; stage = 'index-fallback'; path = $idxFile.FullName; manifest = $idxManifest; reason = 'missing_runId'; timestamp = (Get-Date).ToString('o') }
         Emit-TraceEvent $ArtifactsDir $evt
-        Write-Host "[trace][runbuilder] index missing runId: $($idxFile.FullName) (structured event emitted)"
+        Write-Host "[trace][runbuilder] index missing runId: $($idxFile.FullName) (emitting unresolved record)"
+      } else {
+        Write-Host "[warn] unresolved runId for index: $($idxFile.FullName) - emitting unresolved record"
       }
-      $bad = [ordered]@{
+
+      $unresolved = [ordered]@{
         runId = 'unknown'
+        runIdResolved = $false
         manifestPath = if ($idxManifest) { $idxManifest } else { $null }
-        source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }      
+        source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }
         status = 'skipped'
         attemptCount = 0
-        reason = 'invalid_missing_runId'
+        reason = 'invalid_missing_runId_unresolved'
         artifacts = [ordered]@{
           indexPath = $idxFile.FullName
           metadataPath = $metaPath
@@ -279,12 +294,13 @@ if (Test-Path $ArtifactsDir) {
         validation = [ordered]@{ pre = $null; post = $null }
         pssa = $null
       }
+
       if ($TraceRunBuilder) {
-        $evt2 = [ordered]@{ event = 'emit_skipped_record'; stage = 'index-fallback'; runId = 'unknown'; indexPath = $idxFile.FullName; reason = 'invalid_missing_runId'; timestamp = (Get-Date).ToString('o') }
+        $evt2 = [ordered]@{ event = 'emit_unresolved_record'; stage = 'index-fallback'; runId = 'unknown'; indexPath = $idxFile.FullName; reason = 'invalid_missing_runId_unresolved'; timestamp = (Get-Date).ToString('o') }
         Emit-TraceEvent $ArtifactsDir $evt2
-        Write-Host "[trace][runbuilder] emitted skipped record for missing runId (structured event emitted)"
       }
-      $runRecords += $bad
+
+      $runRecords += $unresolved
       continue
     }
 
@@ -336,7 +352,7 @@ if (Test-Path $ArtifactsDir) {
 
     $record = [ordered]@{
       # Use the resolved runId determined earlier and keep it immutable for this record
-      runId = $runId
+      runId = $idxRunId
       manifestPath = if ($idxManifest) { $idxManifest } else { $null }
       source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }        
       status = [string]$status
