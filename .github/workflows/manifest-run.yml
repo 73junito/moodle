@@ -187,7 +187,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Guard discovery integrity
-        run: pwsh -NoProfile -File tools/ci/tests/guard_discovery.ps1
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & 'tools/ci/tests/guard_discovery.ps1'
 
       - name: Restore manifest cache (per-run)
         if: false # temporarily disabled to avoid cache-related cancellations during validation
@@ -199,48 +202,47 @@ jobs:
 
       - name: Validate manifest (enforce run dir)
         id: validate
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $ErrorActionPreference = 'Stop'
-            $m = '${{ matrix.path }}'
-            $runId = '${{ matrix.runId }}'
-            $staging = Join-Path (Get-Location).Path ".github/artifacts/$runId"
-            if (-not (Test-Path $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
+          $ErrorActionPreference = 'Stop'
+          $m = '${{ matrix.path }}'
+          $runId = '${{ matrix.runId }}'
+          $staging = Join-Path (Get-Location).Path ".github/artifacts/$runId"
+          if (-not (Test-Path $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
 
-            $mode = '${{ env.MANIFEST_VALIDATION_MODE }}'
-            Write-Host "[validate] Mode: $mode"
-            $report = [ordered]@{ runId = $runId; manifest = $m; timestamp = (Get-Date).ToString('o'); status = 'ok'; errors = @() }
-            $failed = $false
-            try {
-              pwsh -NoProfile -File "tools/ci/ci_validate_manifest.ps1" -ManifestPath $m -EnforceRunDir
-            } catch {
-              $msg = $_.Exception.Message -replace "`n"," " -replace "`r"," "
-              # always emit an annotation so issues are visible in PRs even in baseline mode
-              Write-Host "::error title=Manifest Validation Failed file=$m::${msg}"
-              $report.status = 'failed'
-              $report.errors += $msg
-              $failed = $true
-            }
-            $report | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $staging 'validation-report.json') -Encoding UTF8
-            # write a minimal metadata to preserve artifact contract
-            $meta = [ordered]@{ runId = $runId; manifest = $m; timestamp = (Get-Date).ToString('o'); status = $report.status }
-            $meta | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $staging 'metadata.json') -Encoding UTF8
+          $mode = '${{ env.MANIFEST_VALIDATION_MODE }}'
+          Write-Host "[validate] Mode: $mode"
+          $report = [ordered]@{ runId = $runId; manifest = $m; timestamp = (Get-Date).ToString('o'); status = 'ok'; errors = @() }
+          $failed = $false
+          try {
+            & 'tools/ci/ci_validate_manifest.ps1' -ManifestPath $m -EnforceRunDir
+          } catch {
+            $msg = $_.Exception.Message -replace "`n"," " -replace "`r"," "
+            # always emit an annotation so issues are visible in PRs even in baseline mode
+            Write-Host "::error title=Manifest Validation Failed file=$m::${msg}"
+            $report.status = 'failed'
+            $report.errors += $msg
+            $failed = $true
+          }
+          $report | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $staging 'validation-report.json') -Encoding UTF8
+          # write a minimal metadata to preserve artifact contract
+          $meta = [ordered]@{ runId = $runId; manifest = $m; timestamp = (Get-Date).ToString('o'); status = $report.status }
+          $meta | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $staging 'metadata.json') -Encoding UTF8
 
-            # mark cache-hit if present so downstream can act accordingly
-            if ('${{ steps.manifest_cache.outputs.cache-hit }}' -eq 'true') { Set-Content -Path (Join-Path $staging 'skipped.flag') -Value 'cache-hit' -Encoding UTF8 }
+          # mark cache-hit if present so downstream can act accordingly
+          if ('${{ steps.manifest_cache.outputs.cache-hit }}' -eq 'true') { Set-Content -Path (Join-Path $staging 'skipped.flag') -Value 'cache-hit' -Encoding UTF8 }
 
-            # Fail only when strict mode is configured. Baseline mode reports but does not block CI.
-            if ($failed -and $mode -eq 'strict') {
-              Write-Host "Failing due to strict manifest validation mode"
-              exit 1
-            } else {
-              if ($failed) { Write-Host "Manifest validation failed (baseline mode): issues recorded in validation-report.json" }
-              exit 0
-            }
+          # Fail only when strict mode is configured. Baseline mode reports but does not block CI.
+          if ($failed -and $mode -eq 'strict') {
+            Write-Host "Failing due to strict manifest validation mode"
+            exit 1
+          } else {
+            if ($failed) { Write-Host "Manifest validation failed (baseline mode): issues recorded in validation-report.json" }
+            exit 0
           }
 
-      - name: Upload PR validation report
-        if: github.event_name == 'pull_request'
+      - name: Upload validation report (debug)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pr-validation-report-${{ matrix.runId }}
@@ -274,92 +276,99 @@ jobs:
           key: manifest-cache-${{ matrix.runId }}-${{ matrix.hash }}
 
       - name: Ensure artifact staging exists
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $runId = '${{ matrix.runId }}'
-            $staging = Join-Path (Get-Location).Path ".github/artifacts/$runId"
-            if (-not (Test-Path $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
-          }
+          $ErrorActionPreference = 'Stop'
+          $runId = '${{ matrix.runId }}'
+          $staging = Join-Path (Get-Location).Path ".github/artifacts/$runId"
+          if (-not (Test-Path $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
 
       - name: Run manifest (unless cached)
         id: run_manifest
         if: steps.manifest_cache_run.outputs.cache-hit != 'true'
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $ErrorActionPreference = 'Stop'
-            $m = '${{ matrix.path }}'
-            $runId = '${{ matrix.runId }}'
-            $manifestDir = Split-Path -Parent $m
-            Write-Host "=== Running manifest: $m ==="
-            try {
-              pwsh -NoProfile -File "tools/ci/run.ps1" -ManifestPath $m -EnforceRunDir
-            } catch {
-              $msg = $_.Exception.Message -replace "`n"," " -replace "\r"," "
-              Write-Host "::error title=Manifest Execution Failed file=$m::${msg}"
-              exit 1
-            }
+          $ErrorActionPreference = 'Stop'
+          $m = '${{ matrix.path }}'
+          $runId = '${{ matrix.runId }}'
+          $manifestDir = Split-Path -Parent $m
+          Write-Host "=== Running manifest: $m ==="
+          try {
+            & 'tools/ci/run.ps1' -ManifestPath $m -EnforceRunDir
+          } catch {
+            $msg = $_.Exception.Message -replace "`n"," " -replace "\r"," "
+            Write-Host "::error title=Manifest Execution Failed file=$m::${msg}"
+            exit 1
           }
 
       - name: Collect run artifacts and step logs
         if: always()
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $ErrorActionPreference = 'Stop'
-            $m = '${{ matrix.path }}'
-            $runId = '${{ matrix.runId }}'
-            $manifestDir = Split-Path -Parent $m
-            $staging = Join-Path (Get-Location).Path ".github/artifacts/$runId"
-            if (-not (Test-Path $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
+          $ErrorActionPreference = 'Stop'
+          $m = '${{ matrix.path }}'
+          $runId = '${{ matrix.runId }}'
+          $manifestDir = Split-Path -Parent $m
+          $staging = Join-Path (Get-Location).Path ".github/artifacts/$runId"
+          if (-not (Test-Path $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
 
-            # copy declared outputs
-            $json = Get-Content $m -Raw | ConvertFrom-Json
-            if ($null -ne $json.outputs -and $json.outputs.Count -gt 0) {
-              foreach ($out in $json.outputs) {
-                $p = Join-Path $manifestDir $out
-                if (Test-Path $p) {
-                  $relative = $p.Substring((Resolve-Path $manifestDir).Path.Length).TrimStart([IO.Path]::DirectorySeparatorChar)
-                  $dest = Join-Path $staging $relative
-                  $destDir = Split-Path -Parent $dest
-                  if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
-                  Copy-Item -Path $p -Destination $dest -Force
-                }
+          # copy declared outputs
+          $json = Get-Content $m -Raw | ConvertFrom-Json
+          if ($null -ne $json.outputs -and $json.outputs.Count -gt 0) {
+            foreach ($out in $json.outputs) {
+              $p = Join-Path $manifestDir $out
+              if (Test-Path $p) {
+                $relative = $p.Substring((Resolve-Path $manifestDir).Path.Length).TrimStart([IO.Path]::DirectorySeparatorChar)
+                $dest = Join-Path $staging $relative
+                $destDir = Split-Path -Parent $dest
+                if (-not (Test-Path $destDir)) { New-Item -ItemType Directory -Path $destDir -Force | Out-Null }
+                Copy-Item -Path $p -Destination $dest -Force
               }
             }
-
-            # copy metadata + validation report and steps logs
-            $meta = Join-Path $manifestDir 'metadata.json'
-            if (Test-Path $meta) { Copy-Item -Path $meta -Destination (Join-Path $staging 'metadata.json') -Force }
-            $vre = Join-Path $manifestDir 'validation-report.json'
-            if (Test-Path $vre) { Copy-Item -Path $vre -Destination (Join-Path $staging 'validation-report.json') -Force }
-            $stepsDir = Join-Path $manifestDir 'steps'
-            if (Test-Path $stepsDir) { Copy-Item -Path (Join-Path $stepsDir '*') -Destination (Join-Path $staging 'steps') -Recurse -Force -ErrorAction SilentlyContinue }
-
-            # produce run-level status if missing
-            $destMeta = Join-Path $staging 'metadata.json'
-            if (-not (Test-Path $destMeta)) {
-              $status = if ('${{ steps.run_manifest.outcome }}' -eq 'success') { 'success' } else { 'skipped' }
-              $mm = [ordered]@{ runId = $runId; manifest = $m; timestamp = (Get-Date).ToString('o'); status = $status }
-              $mm | ConvertTo-Json -Depth 5 | Set-Content -Path $destMeta -Encoding UTF8
-            }
-
-            # create a simple status file for aggregator
-            $statusFile = Join-Path $staging 'status.txt'
-            Set-Content -Path $statusFile -Value ((Get-Content $destMeta -Raw | ConvertFrom-Json).status) -Encoding UTF8
           }
 
-      - name: Upload run artifacts (success)
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: run-${{ github.run_id }}-${{ matrix.runId }}-success
-          path: .github/artifacts/${{ matrix.runId }}/**
-          retention-days: ${{ env.ARTIFACT_RETENTION_SUCCESS }}
+          # copy metadata + validation report and steps logs
+          $meta = Join-Path $manifestDir 'metadata.json'
+          if (Test-Path $meta) { Copy-Item -Path $meta -Destination (Join-Path $staging 'metadata.json') -Force }
+          $vre = Join-Path $manifestDir 'validation-report.json'
+          if (Test-Path $vre) { Copy-Item -Path $vre -Destination (Join-Path $staging 'validation-report.json') -Force }
+          $stepsDir = Join-Path $manifestDir 'steps'
+          if (Test-Path $stepsDir) { Copy-Item -Path (Join-Path $stepsDir '*') -Destination (Join-Path $staging 'steps') -Recurse -Force -ErrorAction SilentlyContinue }
 
-      - name: Upload run artifacts (failure)
-        if: failure()
+          # produce run-level status if missing
+          $destMeta = Join-Path $staging 'metadata.json'
+          if (-not (Test-Path $destMeta)) {
+            $status = if ('${{ steps.run_manifest.outcome }}' -eq 'success') { 'success' } else { 'skipped' }
+            $mm = [ordered]@{ runId = $runId; manifest = $m; timestamp = (Get-Date).ToString('o'); status = $status }
+            $mm | ConvertTo-Json -Depth 5 | Set-Content -Path $destMeta -Encoding UTF8
+          }
+
+          # create a simple status file for aggregator
+          $statusFile = Join-Path $staging 'status.txt'
+          Set-Content -Path $statusFile -Value ((Get-Content $destMeta -Raw | ConvertFrom-Json).status) -Encoding UTF8
+
+      - name: List staging directory (debug)
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $runId = '${{ matrix.runId }}'
+          $staging = Join-Path (Get-Location).Path ".github/artifacts/$runId"
+          Write-Host "=== Staging path: $staging ==="
+          if (Test-Path $staging) {
+            Write-Host "--- Recursive listing (short) ---"
+            Get-ChildItem -Path $staging -Recurse -Force | ForEach-Object { Write-Host ($_.FullName) }
+
+            Write-Host "--- Writing machine-readable listing to listing.json ---"
+            Get-ChildItem -Path $staging -Recurse -Force | Select-Object FullName,Length,LastWriteTime | ConvertTo-Json -Depth 3 | Set-Content -Path (Join-Path $staging 'listing.json') -Encoding UTF8
+          } else {
+            Write-Host "Staging path does not exist"
+          }
+      - name: Upload run artifacts (always)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: run-${{ github.run_id }}-${{ matrix.runId }}-failed
+          name: run-${{ github.run_id }}-${{ matrix.runId }}
           path: .github/artifacts/${{ matrix.runId }}/**
           retention-days: ${{ env.ARTIFACT_RETENTION_FAILURE }}
 
