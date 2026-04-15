@@ -45,10 +45,27 @@ function Get-Prop($obj, $name) {
 Write-Host "[aggregator] Scanning artifacts under: $ArtifactsDir"
 Write-Host "[aggregator] TraceRunBuilder switch = $TraceRunBuilder"
 
+# Make artifacts directory resolution resilient in CI where artifacts
+# are downloaded to the workspace root rather than .github/artifacts.
+try {
+  if ($env:GITHUB_WORKSPACE -and $env:GITHUB_WORKSPACE.Trim() -ne '') { $workspaceRoot = $env:GITHUB_WORKSPACE } else { $workspaceRoot = (Get-Location).Path }
+} catch { $workspaceRoot = (Get-Location).Path }
+
+if (-not (Test-Path $ArtifactsDir)) {
+  Write-Host "[aggregator] ArtifactsDir not found: $ArtifactsDir"
+  $ArtifactsDir = $workspaceRoot
+  Write-Host "[aggregator] Falling back to workspace root: $ArtifactsDir"
+}
+
+Write-Host "[aggregator] Effective scan root: $ArtifactsDir"
+try {
+  Get-ChildItem -Path $ArtifactsDir -Recurse -Depth 2 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName | ForEach-Object { Write-Host "[aggregator] FS: $_" }
+} catch { }
+
 # Load CI context for observability (prefer canonical ci-mode.json, then CI_MODE_LABEL, then legacy envs)
 $ciMode = $null
 try {
-  $ciModePath = if ($env:GITHUB_WORKSPACE -and $env:GITHUB_WORKSPACE.Trim() -ne '') { Join-Path $env:GITHUB_WORKSPACE 'ci-mode.json' } else { Join-Path (Get-Location).Path 'ci-mode.json' }
+  $ciModePath = if ($env:GITHUB_WORKSPACE -and $env:GITHUB_WORKSPACE.Trim() -ne '') { Join-Path $env:GITHUB_WORKSPACE 'ci-mode.json' } else { Join-Path (Get-Location).Path 'ci-mode.json' }    
   if (Test-Path $ciModePath) {
     try { $ciMode = Get-Content $ciModePath -Raw | ConvertFrom-Json -ErrorAction Stop } catch { $ciMode = $null }
   }
@@ -72,10 +89,10 @@ function Normalize-RunRecord($r) {
   if (Get-Prop $r 'runId') { $tmpRunIdVal = Get-Prop $r 'runId' }
   $out.runId = Normalize-RunId $tmpRunIdVal
   $out.manifestPath = if (Get-Prop $r 'manifestPath') { [string](Get-Prop $r 'manifestPath') } else { $null }
-  $out.source = if (Get-Prop $r 'source') { [string](Get-Prop $r 'source') } else { 'unknown' }
-  $s = if (Get-Prop $r 'status') { [string](Get-Prop $r 'status').ToLower() } else { $null }
+  $out.source = if (Get-Prop $r 'source') { [string](Get-Prop $r 'source') } else { 'unknown' } 
+  $s = if (Get-Prop $r 'status') { [string](Get-Prop $r 'status').ToLower() } else { $null }    
   $allowed = @('success','failed','skipped')
-  if ($s -and ($allowed -contains $s)) { $out.status = $s } else { $out.status = 'skipped' }
+  if ($s -and ($allowed -contains $s)) { $out.status = $s } else { $out.status = 'skipped' }    
   $out.attemptCount = if (Get-Prop $r 'attemptCount') { try { [int](Get-Prop $r 'attemptCount') } catch { 0 } } else { 0 }
   $out.attemptHistory = if (Get-Prop $r 'attemptHistory') { @((Get-Prop $r 'attemptHistory')) } else { @() }
   $out.reason = if (Get-Prop $r 'reason') { (Get-Prop $r 'reason') } else { $null }
@@ -119,7 +136,7 @@ function Compute-Diff($baselineArr, $currentArr) {
   $cmap = @{}
   foreach ($c in $currentArr) { $cmap[$c.runId] = $c }
 
-  $newRuns = @(); $removed = @(); $regressions = @(); $improvements = @(); $unchanged = @()
+  $newRuns = @(); $removed = @(); $regressions = @(); $improvements = @(); $unchanged = @()     
 
   # new and changed
   foreach ($runId in $cmap.Keys) {
@@ -214,7 +231,7 @@ if (Test-Path $ArtifactsDir) {
     # status resolution: strict contract only (no guessing)
     $allowed = @('success','failed','skipped')
     $idxStatusRaw = Get-Prop $idx 'status'
-    $idxStatus = if ($idxStatusRaw) { $idxStatusRaw.ToString().ToLower() } else { $null }
+    $idxStatus = if ($idxStatusRaw) { $idxStatusRaw.ToString().ToLower() } else { $null }       
     $idxManifest = Get-Prop $idx 'manifest'
     $idxRunIdRaw = Get-Prop $idx 'runId'
     $idxRunId = Normalize-RunId $idxRunIdRaw
@@ -234,7 +251,7 @@ if (Test-Path $ArtifactsDir) {
       $bad = [ordered]@{
         runId = 'unknown'
         manifestPath = if ($idxManifest) { $idxManifest } else { $null }
-        source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }
+        source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }      
         status = 'skipped'
         attemptCount = 0
         reason = 'invalid_missing_runId'
@@ -269,7 +286,7 @@ if (Test-Path $ArtifactsDir) {
       $legacy = [ordered]@{
         runId = Normalize-RunId $legacyRunId
         manifestPath = if ($idxManifest) { $idxManifest } else { $null }
-        source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }
+        source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }      
         status = 'skipped'
         attemptCount = 0
         reason = 'legacy_no_index_v1'
@@ -286,13 +303,13 @@ if (Test-Path $ArtifactsDir) {
       if ($TraceRunBuilder) {
         $evt = [ordered]@{ event = 'legacy_fallback'; stage = 'index-validate'; indexPath = $idxFile.FullName; runId = Normalize-RunId $legacyRunId; reason = 'invalid_index'; timestamp = (Get-Date).ToString('o') }
         Emit-TraceEvent $ArtifactsDir $evt
-        Write-Host "[trace][runbuilder] legacy fallback for index (structured event emitted)"
+        Write-Host "[trace][runbuilder] legacy fallback for index (structured event emitted)"   
       }
       $runRecords += $legacy
       continue
     }
 
-    # If strict mode or valid index, respect index values and apply strict sanity checks
+    # If strict mode or valid index, respect index values and apply strict sanity checks        
     if ($invalidIndex -and $StrictContract) {
       # prepare failure record under strict mode
       $status = 'failed'
@@ -306,7 +323,7 @@ if (Test-Path $ArtifactsDir) {
     $record = [ordered]@{
       runId = Normalize-RunId $idxRunId
       manifestPath = if ($idxManifest) { $idxManifest } else { $null }
-      source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }
+      source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }        
       status = [string]$status
       attemptCount = if (Get-Prop $idx 'attemptCount') { try { [int](Get-Prop $idx 'attemptCount') } catch { 0 } } else { 0 }
       reason = $reason
@@ -329,13 +346,13 @@ $candidates = @()
 if (Test-Path $ArtifactsDir) {
   $candidates += Get-ChildItem -Path $ArtifactsDir -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -in @('metadata.json','pssa-results.json') -or $_.Name -like 'validation-report*.json' }
 }
-try { $repoReports = Get-ChildItem -Path . -Recurse -Filter 'validation-report*.json' -File -ErrorAction SilentlyContinue; if ($repoReports) { $candidates += $repoReports } } catch { }
+try { $repoReports = Get-ChildItem -Path . -Recurse -Filter 'validation-report*.json' -File -ErrorAction SilentlyContinue; if ($repoReports) { $candidates += $repoReports } } catch { }        
 
 foreach ($f in $candidates) {
   # determine runId by parent folder (normalize canonical runId)
   $rawFsRunId = Split-Path -Leaf (Split-Path -Parent $f.FullName)
   $runId = Normalize-RunId $rawFsRunId
-  if ($TraceRunBuilder -and $rawFsRunId -and [string]::IsNullOrWhiteSpace($rawFsRunId)) {
+  if ($TraceRunBuilder -and $rawFsRunId -and [string]::IsNullOrWhiteSpace($rawFsRunId)) {       
     $evt = [ordered]@{ event = 'filesystem_candidate_empty_parent'; stage = 'filesystem-fallback'; path = $f.FullName; reason = 'empty_parent'; timestamp = (Get-Date).ToString('o') }
     Emit-TraceEvent $ArtifactsDir $evt
     Write-Host "[trace][runbuilder] filesystem candidate had empty parent; normalized to 'unknown' (structured event emitted)"
@@ -400,8 +417,8 @@ foreach ($r in $runRecords) {
     if (Get-Prop $artObj 'indexPath') { $art.indexPath = [string](Get-Prop $artObj 'indexPath') }
     if (Get-Prop $artObj 'metadataPath') { $art.metadataPath = [string](Get-Prop $artObj 'metadataPath') }
     if (Get-Prop $artObj 'validationPath') { $art.validationPath = [string](Get-Prop $artObj 'validationPath') }
-    if (Get-Prop $artObj 'pssaPath') { $art.pssaPath = [string](Get-Prop $artObj 'pssaPath') }
-    if (Get-Prop $artObj 'stepsPaths') { $art.stepsPaths = @((Get-Prop $artObj 'stepsPaths')) }
+    if (Get-Prop $artObj 'pssaPath') { $art.pssaPath = [string](Get-Prop $artObj 'pssaPath') }  
+    if (Get-Prop $artObj 'stepsPaths') { $art.stepsPaths = @((Get-Prop $artObj 'stepsPaths')) } 
   }
 
   $validationVal = [ordered]@{ pre = $null; post = $null }
@@ -412,7 +429,7 @@ foreach ($r in $runRecords) {
   }
 
   $pssaVal = $null
-  if (Get-Prop $r 'pssa') { $pssaVal = (Get-Prop $r 'pssa' | Select-Object -Property *) }
+  if (Get-Prop $r 'pssa') { $pssaVal = (Get-Prop $r 'pssa' | Select-Object -Property *) }       
 
   $attemptHistoryVal = @()
   $ahRaw = Get-Prop $r 'attemptHistory'
@@ -433,7 +450,7 @@ foreach ($r in $runRecords) {
   $record = [ordered]@{
     runId = Normalize-RunId((Get-Prop $r 'runId'))
     manifestPath = if (Get-Prop $r 'manifestPath') { [string](Get-Prop $r 'manifestPath') } else { $null }
-    source = if (Get-Prop $r 'source') { [string](Get-Prop $r 'source') } else { 'unknown' }
+    source = if (Get-Prop $r 'source') { [string](Get-Prop $r 'source') } else { 'unknown' }    
     status = $statusVal
     attemptCount = $attemptCountVal
     attemptHistory = $attemptHistoryVal
@@ -443,7 +460,7 @@ foreach ($r in $runRecords) {
     pssa = $pssaVal
   }
 
-  # Final validation: ensure runId is present; if not, convert to an explicit skipped record
+  # Final validation: ensure runId is present; if not, convert to an explicit skipped record    
   if ([string]::IsNullOrWhiteSpace($record.runId)) {
     $record.runId = 'unknown'
     if (-not $record.reason) { $record.reason = 'invalid_missing_runId' }
@@ -460,7 +477,7 @@ $runRecords = $finalRecords
 if ($StrictContract) {
   # Run the external schema validator (keeps single source of truth)
   $tmp = Join-Path -Path $env:TEMP -ChildPath ("runrecord-" + [guid]::NewGuid().ToString() + ".json")
-  ($runRecords | ConvertTo-Json -Depth 10) | Set-Content -Path $tmp -Encoding UTF8 -Force
+  ($runRecords | ConvertTo-Json -Depth 10) | Set-Content -Path $tmp -Encoding UTF8 -Force       
   Write-Host "[aggregator] Strict contract enabled: validating using tools/ci/Test-RunRecordSchema.ps1"
   $validator = Join-Path -Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) -ChildPath 'Test-RunRecordSchema.ps1'
   if (-not (Test-Path $validator)) {
@@ -483,7 +500,7 @@ if ($StrictContract) {
     $baseline = $null
     try { $baseline = Read-JsonFile $BaselinePath } catch { $baseline = $null }
     if (-not $baseline) {
-      Write-Host "[aggregator] Baseline invalid or missing: treating all current runs as new"
+      Write-Host "[aggregator] Baseline invalid or missing: treating all current runs as new"   
       $baselineArr = @()
     } else {
       $baselineArr = @()
@@ -495,7 +512,7 @@ if ($StrictContract) {
 
     $diff = Compute-Diff $baselineArr $currentArr
     $diffOut = 'manifest-run-diff.json'
-    ($diff | ConvertTo-Json -Depth 10) | Set-Content -Path $diffOut -Encoding UTF8 -Force
+    ($diff | ConvertTo-Json -Depth 10) | Set-Content -Path $diffOut -Encoding UTF8 -Force       
     Write-Host "[aggregator] Wrote diff artifact: $diffOut"
   }
 
