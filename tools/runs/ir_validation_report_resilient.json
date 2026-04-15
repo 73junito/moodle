@@ -1,0 +1,14 @@
+{
+  "Timestamp": "2026-04-15T15:26:40.3513339Z",
+  "RunMode": "Resilient",
+  "PipelineVersion": "self_heal_v1",
+  "StrictMode": false,
+  "IsValid": false,
+  "RuleCount": 0,
+  "BaselineMissing": true,
+  "MalformedRuleCount": 0,
+  "MalformedRules": [],
+  "Errors": [
+    "No health result produced"
+  ]
+}
