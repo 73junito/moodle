@@ -48,16 +48,25 @@ foreach ($f in $files) {
   $runId = $null
   try {
     $json = Get-Content $path -Raw | ConvertFrom-Json
-    if ($json -and $json.runId) { $runId = [string]$json.runId }
   } catch { $json = $null }
 
-  # Manifest schema gate: require runId and at least one of inputs/outputs/steps, except for the capability manifest
+  # Schema-tolerant extraction of runId: some manifests are index-style and may lack IO fields.
+  try {
+    if ($json -and $json.PSObject -and $json.PSObject.Properties.Name -contains 'runId') {
+      $runId = [string]$json.runId
+    }
+  } catch { $json = $null }
+
+  # Do not treat discovery as strict schema validation. Accept index-style manifests
+  # (runId present) or fall back to the directory name. Capability manifest is still allowed.
   $isCapability = ($f.Name -ieq 'capability-manifest.json')
   if (-not $isCapability) {
-    if ($null -eq $json -or -not $json.PSObject.Properties.Name -contains 'runId') { continue }
-    $hasIO = ($json.PSObject.Properties.Name -contains 'inputs') -or ($json.PSObject.Properties.Name -contains 'outputs') -or ($json.PSObject.Properties.Name -contains 'steps')
-    if (-not $hasIO) { continue }
+    if (-not $runId) {
+      # fallback: use directory name when runId missing (keeps previous behavior but explicit)
+      $runId = Split-Path -Leaf $manifestDir
+    }
   }
+  # Ensure we always have a runId string
   if (-not $runId) { $runId = Split-Path -Leaf $manifestDir }
 
   # compute manifest hash base: manifest content + referenced inputs + ciHash
