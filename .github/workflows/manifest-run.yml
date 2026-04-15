@@ -471,12 +471,19 @@ jobs:
           name: manifest-run-diff
           path: manifest-run-diff.json
 
-      - name: Validate emission consistency
+      - name: Upload manifest summary artifact
         if: always()
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          pwsh -NoProfile -File tools/ci/tests/validate_final_emission.ps1 -FinalDebug '.github/artifacts/manifest-run-final-debug.json' -Summary 'manifest-run-summary.json'
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifest-run-summary
+          path: manifest-run-summary.json
+
+      - name: Upload manifest final-debug artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifest-run-final-debug
+          path: .github/artifacts/manifest-run-final-debug.json
 
       # debug bundle moved below to capture ci-decision.json
 
@@ -593,3 +600,36 @@ jobs:
             }
             Write-Host "Emitted $count annotations (capped at $max)"
           }
+
+  validate-emission:
+    name: validate-emission
+    needs: aggregate-results
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download manifest summary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: manifest-run-summary
+          path: artifacts/summary
+          if-no-files-found: warn
+
+      - name: Download manifest final-debug artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: manifest-run-final-debug
+          path: artifacts/final-debug
+          if-no-files-found: warn
+
+      - name: Validate emission consistency
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $final = Join-Path ${{ github.workspace }} 'artifacts/final-debug/manifest-run-final-debug.json'
+          $summary = Join-Path ${{ github.workspace }} 'artifacts/summary/manifest-run-summary.json'
+          if (-not (Test-Path $final)) { Write-Host "Final-debug artifact missing: $final"; exit 1 }
+          if (-not (Test-Path $summary)) { Write-Host "Summary artifact missing: $summary"; exit 1 }
+          pwsh -NoProfile -File tools/ci/tests/validate_final_emission.ps1 -FinalDebug $final -Summary $summary
