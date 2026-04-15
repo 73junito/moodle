@@ -500,6 +500,7 @@ try {
 
     $index = [ordered]@{
         runId = $manifest.runId
+        status = $status
         manifest = (Normalize-PathForIndex -path $ManifestPath)
         timestamp = (Get-Date).ToString('o')
         attemptCount = $attemptsPerformed
