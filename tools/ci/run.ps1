@@ -459,13 +459,34 @@ try {
     $pssaFiles = @()
     $stepFiles = @()
 
+    # canonicalize paths relative to artifact root or repository root to avoid absolute paths
+    $artifactRootFull = (Get-Item -LiteralPath $artifactRoot).FullName.TrimEnd('\')
+    $repoRootFull = (Get-Item -LiteralPath (Get-Location)).FullName.TrimEnd('\')
+
+    function Normalize-PathForIndex {
+        param([string]$path)
+        if (-not $path) { return $null }
+        $pFull = $null
+        try { $pFull = (Get-Item -LiteralPath $path -ErrorAction Stop).FullName.TrimEnd('\') } catch { $pFull = $path }
+        if ($pFull -and $pFull.StartsWith($artifactRootFull, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $rel = [System.IO.Path]::GetRelativePath($artifactRootFull, $pFull)
+            return ($rel -replace '\\','/')
+        }
+        if ($pFull -and $pFull.StartsWith($repoRootFull, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $rel = [System.IO.Path]::GetRelativePath($repoRootFull, $pFull)
+            return ($rel -replace '\\','/')
+        }
+        # fallback: return filename only
+        return ([System.IO.Path]::GetFileName($path) -replace '\\','/')
+    }
+
     # validation reports may be written to artifactRoot or repository (migration stubs)
-    $validationFiles += Get-ChildItem -Path $artifactRoot -Filter 'validation-report*.json' -File -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }
-    $validationFiles += Get-ChildItem -Path $manifestDir -Recurse -Filter 'validation-report*.json' -File -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }
+    $files = @(Get-ChildItem -Path $artifactRoot -Filter 'validation-report*.json' -File -ErrorAction SilentlyContinue) + @(Get-ChildItem -Path $manifestDir -Recurse -Filter 'validation-report*.json' -File -ErrorAction SilentlyContinue)
+    foreach ($f in $files) { $n = Normalize-PathForIndex -path $f.FullName; if ($n) { $validationFiles += $n } }
 
     # PSSA results if present in artifactRoot or repo
-    $pssaFiles += Get-ChildItem -Path $artifactRoot -Filter 'pssa-results.json' -File -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }
-    $pssaFiles += Get-ChildItem -Path $manifestDir -Recurse -Filter 'pssa-results.json' -File -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }
+    $files = @(Get-ChildItem -Path $artifactRoot -Filter 'pssa-results.json' -File -ErrorAction SilentlyContinue) + @(Get-ChildItem -Path $manifestDir -Recurse -Filter 'pssa-results.json' -File -ErrorAction SilentlyContinue)
+    foreach ($f in $files) { $n = Normalize-PathForIndex -path $f.FullName; if ($n) { $pssaFiles += $n } }
 
     # steps artifacts are captured inside manifestDir/steps by Invoke-Step; collect stdout/stderr paths from attemptHistory
     foreach ($ah in @($attemptHistory)) {
