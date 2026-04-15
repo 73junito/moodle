@@ -335,7 +335,8 @@ if (Test-Path $ArtifactsDir) {
     }
 
     $record = [ordered]@{
-      runId = Normalize-RunId $idxRunId
+      # Use the resolved runId determined earlier and keep it immutable for this record
+      runId = $runId
       manifestPath = if ($idxManifest) { $idxManifest } else { $null }
       source = if (Get-Prop $idx 'source') { Get-Prop $idx 'source' } else { 'unknown' }        
       status = [string]$status
@@ -468,7 +469,8 @@ foreach ($r in $runRecords) {
   }
 
   $record = [ordered]@{
-    runId = Normalize-RunId((Get-Prop $r 'runId'))
+    # Preserve the runId already stored on the record; do not recompute from other sources.
+    runId = if (Get-Prop $r 'runId') { (Get-Prop $r 'runId') } else { $null }
     manifestPath = if (Get-Prop $r 'manifestPath') { [string](Get-Prop $r 'manifestPath') } else { $null }
     source = if (Get-Prop $r 'source') { [string](Get-Prop $r 'source') } else { 'unknown' }    
     status = $statusVal
