@@ -548,20 +548,37 @@ jobs:
 
       - name: Enforce CI Decision
         id: enforce_ci_decision
+        if: always()
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $ErrorActionPreference = 'Stop'
-            $candidates = @('ci-decision.json', "$env:GITHUB_WORKSPACE/ci-decision.json", 'debug-bundle/ci-decision.json')
-            $found = $null
-            foreach ($p in $candidates) { if (Test-Path $p) { $found = $p; break } }
-            if (-not $found) { Write-Error 'ci-decision.json missing in expected locations'; exit 1 }
-            $d = Get-Content $found -Raw | ConvertFrom-Json -ErrorAction Stop
-            Write-Host "[ci] decision=$($d.decision) reason=$($d.reason) mode=$($d.mode) (from $found)"
-            if ($d.decision -ne 'pass') {
-              Write-Error "::error::CI failed via decision engine ($($d.reason))"
-              exit 1
-            }
-            exit 0
+          $ErrorActionPreference = 'Stop'
+          $candidates = @(
+            'ci-decision.json',
+            "$env:GITHUB_WORKSPACE/ci-decision.json",
+            'debug-bundle/ci-decision.json'
+          )
+
+          $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          Write-Host "[ci] candidates=$($candidates -join ', ')"
+          Write-Host "[ci] found=$found"
+
+          if (-not $found) {
+            Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Force | Select-Object -Expand FullName
+            throw 'ci-decision.json missing in expected locations'
+          }
+
+          try {
+            $raw = Get-Content $found -Raw -Encoding UTF8
+            $d = $raw | ConvertFrom-Json -ErrorAction Stop
+          } catch {
+            Write-Host "[ci] failed to parse $found"
+            Get-Content $found -Raw
+            throw
+          }
+
+          Write-Host "[ci] decision=$($d.decision) reason=$($d.reason) mode=$($d.mode) (from $found)"
+          if ($d.decision -ne 'pass') {
+            throw "CI failed via decision engine ($($d.reason))"
           }
 
       - name: Comment PR with summary
