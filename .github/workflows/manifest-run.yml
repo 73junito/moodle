@@ -548,18 +548,17 @@ jobs:
 
       - name: Enforce CI Decision
         id: enforce_ci_decision
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $ErrorActionPreference = 'Stop'
-            if (-not (Test-Path 'ci-decision.json')) { Write-Error 'ci-decision.json missing'; exit 1 }
-            $d = Get-Content 'ci-decision.json' -Raw | ConvertFrom-Json -ErrorAction Stop
-            Write-Host "[ci] decision=$($d.decision) reason=$($d.reason) mode=$($d.mode)"
-            if ($d.decision -ne 'pass') {
-              Write-Error "::error::CI failed via decision engine ($($d.reason))"
-              exit 1
-            }
-            exit 0
+          $ErrorActionPreference = 'Stop'
+          if (-not (Test-Path 'ci-decision.json')) { Write-Error 'ci-decision.json missing'; exit 1 }
+          $d = Get-Content 'ci-decision.json' -Raw | ConvertFrom-Json -ErrorAction Stop
+          Write-Host "[ci] decision=$($d.decision) reason=$($d.reason) mode=$($d.mode)"
+          if ($d.decision -ne 'pass') {
+            Write-Error "::error::CI failed via decision engine ($($d.reason))"
+            exit 1
           }
+          exit 0
 
       - name: Comment PR with summary
         if: github.event_name == 'pull_request'
@@ -600,38 +599,37 @@ jobs:
 
       - name: Annotate PR with new PSScriptAnalyzer findings
         if: github.event_name == 'pull_request'
+        shell: pwsh
         run: |
-          pwsh -NoProfile -Command {
-            $ErrorActionPreference = 'Stop'
-            $summaryPath = 'manifest-run-summary.json'
-            if (-not (Test-Path $summaryPath)) { Write-Host 'No manifest summary found; skipping annotations'; exit 0 }
-            $s = Get-Content $summaryPath -Raw | ConvertFrom-Json
-            if (-not $s.pssa -or -not $s.pssa.newSamples) { Write-Host 'No new PSSA findings'; exit 0 }
+          $ErrorActionPreference = 'Stop'
+          $summaryPath = 'manifest-run-summary.json'
+          if (-not (Test-Path $summaryPath)) { Write-Host 'No manifest summary found; skipping annotations'; exit 0 }
+          $s = Get-Content $summaryPath -Raw | ConvertFrom-Json
+          if (-not $s.pssa -or -not $s.pssa.newSamples) { Write-Host 'No new PSSA findings'; exit 0 }
 
-            # build dedup key and cap
-            $max = 50
-            $seen = @{}
-            $count = 0
-            foreach ($f in $s.pssa.newSamples) {
-              if ($count -ge $max) { break }
-              $file = if ($f.ScriptName) { $f.ScriptName } elseif ($f.FileName) { $f.FileName } else { $null }
-              $line = if ($f.Line) { [int]$f.Line } else { 1 }
-              $rule = if ($f.RuleName) { $f.RuleName } elseif ($f.Rule) { $f.Rule } else { '' }
-              $msg = if ($f.Message) { ($f.Message -replace "`n"," " -replace "\r"," ").Trim() } else { '' }
-              if (-not $file) { continue }
-              $key = "$file|$rule|$msg"
-              if ($seen.ContainsKey($key)) { continue }
-              $seen[$key] = $true
+          # build dedup key and cap
+          $max = 50
+          $seen = @{}
+          $count = 0
+          foreach ($f in $s.pssa.newSamples) {
+            if ($count -ge $max) { break }
+            $file = if ($f.ScriptName) { $f.ScriptName } elseif ($f.FileName) { $f.FileName } else { $null }
+            $line = if ($f.Line) { [int]$f.Line } else { 1 }
+            $rule = if ($f.RuleName) { $f.RuleName } elseif ($f.Rule) { $f.Rule } else { '' }
+            $msg = if ($f.Message) { ($f.Message -replace "`n"," " -replace "\r"," ").Trim() } else { '' }
+            if (-not $file) { continue }
+            $key = "$file|$rule|$msg"
+            if ($seen.ContainsKey($key)) { continue }
+            $seen[$key] = $true
 
-              # severity mapping
-              $sev = if ($f.Severity) { $f.Severity } else { 'Warning' }
-              if ($sev -in @('Information','Info')) { continue }
-              $ann = 'warning'
-              if ($sev -in @('Error','Critical')) { $ann = 'error' }
+            # severity mapping
+            $sev = if ($f.Severity) { $f.Severity } else { 'Warning' }
+            if ($sev -in @('Information','Info')) { continue }
+            $ann = 'warning'
+            if ($sev -in @('Error','Critical')) { $ann = 'error' }
 
-              # emit GitHub annotation
-              Write-Host "::${ann} file=${file},line=${line},title=PSSA:${rule}::${msg}"
-              $count++
-            }
-            Write-Host "Emitted $count annotations (capped at $max)"
+            # emit GitHub annotation
+            Write-Host "::${ann} file=${file},line=${line},title=PSSA:${rule}::${msg}"
+            $count++
           }
+          Write-Host "Emitted $count annotations (capped at $max)"
