@@ -2,7 +2,9 @@ param(
     [string]$ArtifactsDir = 'artifacts',
     [string]$OutputJson = 'manifest-run-summary.json',
     [string]$DiffJson = 'manifest-run-diff.json',
-    [switch]$WriteBaseline
+    [switch]$WriteBaseline,
+    [string]$BaselinePath = '',
+    [switch]$TraceRunBuilder
 )
 
 function Normalize-RunId($id) {
@@ -10,6 +12,37 @@ function Normalize-RunId($id) {
     $s = [string]$id
     if ([string]::IsNullOrWhiteSpace($s)) { return 'unknown' }
     return $s
+}
+
+function Normalize-Status($s) {
+    if ($null -eq $s) { return 'unknown' }
+    $t = $s.ToString().ToLower()
+    switch ($t) {
+        'success' { return 'success' }
+        'ok' { return 'success' }
+        'passed' { return 'success' }
+        'failed' { return 'failed' }
+        'error' { return 'failed' }
+        'skipped' { return 'skipped' }
+        'unknown' { return 'unknown' }
+        default { return $t }
+    }
+}
+
+function Resolve-ManifestPath($path) {
+    if (-not $path) { return $null }
+    # If already absolute, return as-is
+    try {
+        $p = [string]$path
+        if ([System.IO.Path]::IsPathRooted($p)) { return $p }
+        # try resolve relative to current working directory
+        $candidate = Join-Path (Get-Location).Path $p
+        if (Test-Path $candidate) { return (Resolve-Path $candidate).Path }
+        # try resolve relative to artifacts dir
+        $candidate2 = Join-Path (Resolve-Path -LiteralPath $ArtifactsDir).Path $p
+        if (Test-Path $candidate2) { return (Resolve-Path $candidate2).Path }
+        return $p
+    } catch { return $path }
 }
 
 function Write-AtomicJson($path, $obj) {
@@ -109,6 +142,10 @@ if (-not (Test-Path $ArtifactsDir)) {
             $valRel = $null
             if (Test-Path $valPath) { $valRel = (Resolve-Path $valPath).Path }
 
+            # normalize manifest path to absolute when possible
+            $manifestResolved = $null
+            if ($manifestPath) { $manifestResolved = Resolve-ManifestPath $manifestPath }
+
             $artifacts = [ordered]@{
                 indexPath = $indexRel
                 metadataPath = $metaRel
@@ -117,9 +154,11 @@ if (-not (Test-Path $ArtifactsDir)) {
                 stepsPaths = @()
             }
 
+            # normalize status and use resolved manifest when helpful
+            $status = Normalize-Status $status
             $record = [ordered]@{
                 runId = $runId
-                manifestPath = $manifestPath
+                manifestPath = $manifestResolved ? $manifestResolved : $manifestPath
                 source = 'unknown'
                 status = $status
                 attemptCount = $attemptCount
@@ -129,6 +168,26 @@ if (-not (Test-Path $ArtifactsDir)) {
                 validation = [ordered]@{ pre = $null; post = $null }
                 pssa = $null
             }
+
+            # Only include real execution runs: status indicates execution OR manifest path exists
+            $isExecution = $false
+            if ($record.status -in @('success','failed')) { $isExecution = $true }
+            if (-not $isExecution -and $record.manifestPath -and -not [string]::IsNullOrWhiteSpace($record.manifestPath)) {
+                $isExecution = $true
+            }
+
+            if (-not $isExecution) {
+                Write-Host "[aggregator] Skipping non-execution run: $runId (status=$status manifest=$manifestPath)"
+                continue
+            }
+
+            # Ensure runId is present and normalized
+            $record.runId = Normalize-RunId $record.runId
+
+            # prefer absolute artifact paths when available
+            if ($artifacts.indexPath) { $record.artifacts.indexPath = $artifacts.indexPath }
+            if ($artifacts.metadataPath) { $record.artifacts.metadataPath = $artifacts.metadataPath }
+            if ($artifacts.validationPath) { $record.artifacts.validationPath = $artifacts.validationPath }
 
             $runs += $record
         } catch {
@@ -140,26 +199,52 @@ if (-not (Test-Path $ArtifactsDir)) {
     }
 }
 
+# Deduplicate runs by (runId, manifestPath) to avoid double-counting
+$WriteHost = $null
+Write-Host "[aggregator] Deduplicating runs by runId+manifestPath"
+# use generic List[object] constructor to ensure ToArray() is available and types are consistent
+$uniqueList = [System.Collections.Generic.List[object]]::new()
+$seen = @{}
+foreach ($r in $runs) {
+    $rid = if ($r.runId) { $r.runId } else { 'unknown' }
+    $mp = if ($r.manifestPath) { $r.manifestPath } else { '' }
+    $key = "${rid}|${mp}"
+    if (-not $seen.ContainsKey($key)) {
+        $seen[$key] = $true
+        $uniqueList.Add($r) | Out-Null
+    } else {
+        Write-Host "[aggregator] Skipping duplicate run entry: $rid manifest=$mp"
+    }
+}
+
+# convert generic list to native array for downstream processing
+$runs = $uniqueList.ToArray()
+
 # Ensure deterministic ordering by runId (push unknowns to the end)
 $runs = @($runs | Sort-Object -Property @{ Expression = { if ($_.runId) { $_.runId } else { 'zzz-unknown' } } })
 
 # Build a stable summary object (always an object, never an array)
 Write-Host "[aggregator] runs count = $($runs.Count)"
-$passedRuns = @($runs | Where-Object { $_.status -in @('success','ok','passed') })
-$failedRuns = @($runs | Where-Object { $_.status -eq 'failed' })
+
+# Compute passed/failed counts deterministically
+$passed = ($runs | Where-Object { $_.status -in @('success','ok','passed') }).Count
+$failed = ($runs | Where-Object { $_.status -eq 'failed' }).Count
+$failedRunIds = @($runs | Where-Object { $_.status -eq 'failed' } | ForEach-Object { $_.runId })
 
 $summaryObj = [ordered]@{
-    passed = $passedRuns.Count
-    failed = $failedRuns.Count
+    passed = $passed
+    failed = $failed
     total  = @($runs).Count
-    failedRuns = @($failedRuns | ForEach-Object { $_.runId })
+    failedRuns = $failedRunIds
     runs   = @($runs)
     pssa = [ordered]@{ newFindings = 0; existingFindings = 0; resolvedFindings = 0; topFiles = @(); newSamples = @() }
     errors = $global:AGGREGATOR_ERRORS
     timestamp = (Get-Date).ToString('o')
 }
+
 Write-Host "[aggregator] Summary => passed=$($summaryObj.passed) failed=$($summaryObj.failed) total=$($summaryObj.total)"
 Write-AtomicJson -path $OutputJson -obj $summaryObj
+Write-Host "[aggregator] Wrote canonical run records: $OutputJson"
 
 # Build a simple diff artifact that references the runs (no null runIds)
 $diff = [ordered]@{
