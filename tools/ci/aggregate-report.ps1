@@ -76,7 +76,7 @@ $global:AGGREGATOR_ERRORS = @()
 
 if (-not (Test-Path $ArtifactsDir)) {
     Write-Host "[aggregator] Artifacts directory '$ArtifactsDir' not found; emitting empty outputs"
-    $runs = @()
+    $runMap = @{}
 } else {
     Write-Host "[aggregator] === ARTIFACT TREE ==="
     Get-ChildItem -Path $ArtifactsDir -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
@@ -99,7 +99,44 @@ if (-not (Test-Path $ArtifactsDir)) {
 
     Write-Host "[aggregator] Found $($runDirs.Count) candidate run directories under $ArtifactsDir"
 
-    $runs = @()
+    $runMap = @{}
+    function Merge-RunRecord {
+        param(
+            [hashtable]$Existing,
+            [hashtable]$Incoming
+        )
+
+        if (-not $Existing) { return $Incoming }
+        if (-not $Incoming) { return $Existing }
+
+        # Prefer successful execution metadata
+        if ($Incoming.status -eq 'success') { $Existing.status = 'success' }
+
+        # Merge artifacts deterministically (prefer run-* over others)
+        $incomingIsRun = $false
+        $existingIsRun = $false
+        try { if ($Incoming.artifacts.metadataPath -match "[/\\]run-") { $incomingIsRun = $true } } catch {}
+        try { if ($Existing.artifacts.metadataPath -match "[/\\]run-") { $existingIsRun = $true } } catch {}
+
+        if ($incomingIsRun -and -not $existingIsRun) {
+            $Existing.artifacts = $Incoming.artifacts
+        }
+        elseif ($incomingIsRun -eq $existingIsRun) {
+            foreach ($k in $Incoming.artifacts.Keys) {
+                if (-not $Existing.artifacts[$k]) { $Existing.artifacts[$k] = $Incoming.artifacts[$k] }
+            }
+        }
+
+        # Merge attempt counts and histories
+        $Existing.attemptCount = [math]::Max([int]$Existing.attemptCount, [int]$Incoming.attemptCount)
+        $Existing.attemptHistory = @(@($Existing.attemptHistory) + @($Incoming.attemptHistory)) | Select-Object -Unique
+
+        # Choose status deterministically: prefer failure if present, then success
+        $Existing.status = Choose-Status $Existing.status $Incoming.status
+
+        return $Existing
+    }
+
     foreach ($item in $runDirs) {
         $dir = $item.FullName
         Write-Host "[aggregator] Processing run dir: $dir"
@@ -189,7 +226,12 @@ if (-not (Test-Path $ArtifactsDir)) {
             if ($artifacts.metadataPath) { $record.artifacts.metadataPath = $artifacts.metadataPath }
             if ($artifacts.validationPath) { $record.artifacts.validationPath = $artifacts.validationPath }
 
-            $runs += $record
+            $rid = $record.runId
+            if (-not $runMap.ContainsKey($rid)) {
+                $runMap[$rid] = $record
+            } else {
+                $runMap[$rid] = Merge-RunRecord -Existing $runMap[$rid] -Incoming $record
+            }
         } catch {
             Write-Host "[aggregator] Failed processing run dir $dir"
             Write-Host ($_ | Out-String)
@@ -199,29 +241,28 @@ if (-not (Test-Path $ArtifactsDir)) {
     }
 }
 
-# Deduplicate runs by (runId, manifestPath) to avoid double-counting
-$WriteHost = $null
-Write-Host "[aggregator] Deduplicating runs by runId+manifestPath"
-# use generic List[object] constructor to ensure ToArray() is available and types are consistent
-$uniqueList = [System.Collections.Generic.List[object]]::new()
-$seen = @{}
-foreach ($r in $runs) {
-    $rid = if ($r.runId) { $r.runId } else { 'unknown' }
-    $mp = if ($r.manifestPath) { $r.manifestPath } else { '' }
-    $key = "${rid}|${mp}"
-    if (-not $seen.ContainsKey($key)) {
-        $seen[$key] = $true
-        $uniqueList.Add($r) | Out-Null
-    } else {
-        Write-Host "[aggregator] Skipping duplicate run entry: $rid manifest=$mp"
+Write-Host "[aggregator] Merged runs were accumulated during collection; verifying uniqueness and flattening map"
+
+function Choose-Status($a, $b) {
+    $priority = @('failed','success','ok','skipped','unknown')
+    foreach ($p in $priority) {
+        if (($a -and ($a -eq $p)) -or ($b -and ($b -eq $p))) { return $p }
     }
+    if ($a) { return $a }
+    return $b
 }
 
-# convert generic list to native array for downstream processing
-$runs = $uniqueList.ToArray()
+# Sanity check: duplicate runIds after merge should be impossible because keys are unique.
+$duplicateIds = $runMap.Keys | Group-Object | Where-Object { $_.Count -gt 1 }
 
-# Ensure deterministic ordering by runId (push unknowns to the end)
-$runs = @($runs | Sort-Object -Property @{ Expression = { if ($_.runId) { $_.runId } else { 'zzz-unknown' } } })
+if ($duplicateIds) {
+    Write-Host "[aggregator] ERROR: duplicate runIds detected after merge (this should be impossible)"
+    $duplicateIds | ForEach-Object { Write-Host "-- $($_.Name) count=$($_.Count)" }
+    exit 2
+}
+
+# Flatten map to array and ensure deterministic ordering by runId
+$runs = @($runMap.Values) | Sort-Object -Property @{ Expression = { if ($_.runId) { $_.runId } else { 'zzz-unknown' } } }
 
 # Build a stable summary object (always an object, never an array)
 Write-Host "[aggregator] runs count = $($runs.Count)"

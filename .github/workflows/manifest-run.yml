@@ -532,7 +532,7 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          & 'tools/ci/ci-decision.ps1' -SummaryPath 'manifest-run-summary.json' -DiffPath 'manifest-run-diff.json' -OutputPath 'ci-decision.json'
+          & 'tools/ci/ci-decision.ps1' -SummaryPath "$env:GITHUB_WORKSPACE/manifest-run-summary.json" -DiffPath "$env:GITHUB_WORKSPACE/manifest-run-diff.json" -OutputPath "$env:GITHUB_WORKSPACE/ci-decision.json"
 
       - name: Upload debug bundle
         if: always()
@@ -551,9 +551,12 @@ jobs:
         run: |
           pwsh -NoProfile -Command {
             $ErrorActionPreference = 'Stop'
-            if (-not (Test-Path 'ci-decision.json')) { Write-Error 'ci-decision.json missing'; exit 1 }
-            $d = Get-Content 'ci-decision.json' -Raw | ConvertFrom-Json -ErrorAction Stop
-            Write-Host "[ci] decision=$($d.decision) reason=$($d.reason) mode=$($d.mode)"
+            $candidates = @('ci-decision.json', "$env:GITHUB_WORKSPACE/ci-decision.json", 'debug-bundle/ci-decision.json')
+            $found = $null
+            foreach ($p in $candidates) { if (Test-Path $p) { $found = $p; break } }
+            if (-not $found) { Write-Error 'ci-decision.json missing in expected locations'; exit 1 }
+            $d = Get-Content $found -Raw | ConvertFrom-Json -ErrorAction Stop
+            Write-Host "[ci] decision=$($d.decision) reason=$($d.reason) mode=$($d.mode) (from $found)"
             if ($d.decision -ne 'pass') {
               Write-Error "::error::CI failed via decision engine ($($d.reason))"
               exit 1
