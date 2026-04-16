@@ -422,6 +422,14 @@ jobs:
           Write-Host 'First 40 lines:'
           if (Test-Path tools/ci/aggregate-report.ps1) { Get-Content tools/ci/aggregate-report.ps1 -TotalCount 40 | ForEach-Object { Write-Host $_ } } else { Write-Host 'file missing' }
 
+      - name: Validate downloaded artifacts
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host '--- ARTIFACT VALIDATION ---'
+          $ErrorActionPreference = 'Stop'
+          pwsh -NoProfile -File tools/ci/check-artifact-jsons.ps1 -ArtifactsDir artifacts
+
       - name: Aggregate results
         id: aggregate
         shell: pwsh
@@ -431,7 +439,10 @@ jobs:
             Write-Host '[aggregate] Listing extracted artifacts (artifacts/*):'
             if (Test-Path artifacts) { Get-ChildItem -Path artifacts -Recurse -Force | ForEach-Object { Write-Host $_.FullName } } else { Write-Host 'No artifacts directory present' }
             $shouldWriteBaseline = ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -or $env:GITHUB_REF -eq 'refs/heads/main')
-            $args = @('-ArtifactsDir','artifacts','-OutputJson','manifest-run-summary.json')
+            $args = @('-ArtifactsDir','artifacts',
+                      '-OutputJson', "$env:GITHUB_WORKSPACE/manifest-run-summary.json",
+                      '-DiffJson', "$env:GITHUB_WORKSPACE/manifest-run-diff.json",
+                      '-BaselinePath', "$env:GITHUB_WORKSPACE/.github/cache_manifest/pssa-baseline.json")
             # respect workflow_dispatch input to enable tracing in CI
             if ($env:TRACE_RUN_BUILDER -and $env:TRACE_RUN_BUILDER -eq 'true') { $args += '-TraceRunBuilder' }
             if ($shouldWriteBaseline) {
