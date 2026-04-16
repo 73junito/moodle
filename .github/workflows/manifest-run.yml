@@ -164,7 +164,10 @@ jobs:
           $outdir = '.github/artifacts'
           if (-not (Test-Path $outdir)) { New-Item -ItemType Directory -Path $outdir -Force | Out-Null }
           $res = Invoke-ScriptAnalyzer -Path 'tools/ci' -Recurse -ErrorAction SilentlyContinue
-          $res | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $outdir 'pssa-results.json') -Encoding UTF8
+          $json = $res | ConvertTo-Json -Depth 10
+          $tmp = Join-Path $outdir ("pssa-results.json.tmp.$([System.Guid]::NewGuid().ToString())")
+          $json | Out-File -FilePath $tmp -Encoding UTF8 -NoNewline
+          Move-Item -Path $tmp -Destination (Join-Path $outdir 'pssa-results.json') -Force
           $errCount = ($res | Where-Object { $_.Severity -in @('Error','Critical') }).Count
           Write-Host "PSScriptAnalyzer found $errCount errors"
           if ($env:PSSA_MODE -eq 'strict' -and $errCount -gt 0) { Write-Host 'Failing due to PSScriptAnalyzer errors'; exit 1 }
@@ -230,10 +233,16 @@ jobs:
             $report.errors += $msg
             $failed = $true
           }
-          $report | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $staging 'validation-report.json') -Encoding UTF8
+          $json = $report | ConvertTo-Json -Depth 5
+          $tmpvr = Join-Path $staging ("validation-report.json.tmp.$([System.Guid]::NewGuid().ToString())")
+          $json | Out-File -FilePath $tmpvr -Encoding UTF8 -NoNewline
+          Move-Item -Path $tmpvr -Destination (Join-Path $staging 'validation-report.json') -Force
           # write a minimal metadata to preserve artifact contract
           $meta = [ordered]@{ runId = $runId; manifest = $m; timestamp = (Get-Date).ToString('o'); status = $report.status }
-          $meta | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $staging 'metadata.json') -Encoding UTF8
+          $jsonm = $meta | ConvertTo-Json -Depth 5
+          $tmpm = Join-Path $staging ("metadata.json.tmp.$([System.Guid]::NewGuid().ToString())")
+          $jsonm | Out-File -FilePath $tmpm -Encoding UTF8 -NoNewline
+          Move-Item -Path $tmpm -Destination (Join-Path $staging 'metadata.json') -Force
 
           # mark cache-hit if present so downstream can act accordingly
           if ('${{ steps.manifest_cache.outputs.cache-hit }}' -eq 'true') { Set-Content -Path (Join-Path $staging 'skipped.flag') -Value 'cache-hit' -Encoding UTF8 }
@@ -354,7 +363,10 @@ jobs:
           if (-not (Test-Path $destMeta)) {
             $status = if ('${{ steps.run_manifest.outcome }}' -eq 'success') { 'success' } else { 'skipped' }
             $mm = [ordered]@{ runId = $runId; manifest = $m; timestamp = (Get-Date).ToString('o'); status = $status }
-            $mm | ConvertTo-Json -Depth 5 | Set-Content -Path $destMeta -Encoding UTF8
+            $jsonmm = $mm | ConvertTo-Json -Depth 5
+            $tmpmm = Join-Path $staging ("metadata.json.tmp.$([System.Guid]::NewGuid().ToString())")
+            $jsonmm | Out-File -FilePath $tmpmm -Encoding UTF8 -NoNewline
+            Move-Item -Path $tmpmm -Destination $destMeta -Force
           }
 
           # create a simple status file for aggregator
