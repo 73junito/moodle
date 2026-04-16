@@ -428,8 +428,10 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           try {
+            Write-Host '[aggregate] Listing extracted artifacts (artifacts/*):'
+            if (Test-Path artifacts) { Get-ChildItem -Path artifacts -Recurse -Force | ForEach-Object { Write-Host $_.FullName } } else { Write-Host 'No artifacts directory present' }
             $shouldWriteBaseline = ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -or $env:GITHUB_REF -eq 'refs/heads/main')
-            $args = @('-ArtifactsDir','artifacts','-OutputJson','manifest-run-summary.json','-BaselinePath','.github/cache_manifest/pssa-baseline.json')
+            $args = @('-ArtifactsDir','artifacts','-OutputJson','manifest-run-summary.json')
             # respect workflow_dispatch input to enable tracing in CI
             if ($env:TRACE_RUN_BUILDER -and $env:TRACE_RUN_BUILDER -eq 'true') { $args += '-TraceRunBuilder' }
             if ($shouldWriteBaseline) {
@@ -441,9 +443,27 @@ jobs:
             }
           } catch {
             Write-Host "[aggregate] aggregator failed: $($_.Exception.Message)"
-            Write-Host '[aggregate] Emitting empty run-record array to satisfy decision contract'
-            # Contract: decision engine expects an array of run records. Emit an empty array on failure
-            @() | ConvertTo-Json -Depth 10 | Set-Content -Path manifest-run-summary.json -Encoding UTF8
+            Write-Host '[aggregate] --- FULL ERROR START ---'
+            Write-Host ($_ | Out-String)
+            Write-Host '[aggregate] --- FULL ERROR END ---'
+            Write-Host '[aggregate] Emitting safe empty summary object to satisfy decision contract'
+            $fallbackSummary = [ordered]@{
+              passed = 0
+              failed = 0
+              total = 0
+              failedRuns = @()
+              runs = @()
+              pssa = [ordered]@{
+                newFindings = 0
+                existingFindings = 0
+                resolvedFindings = 0
+                topFiles = @()
+                newSamples = @()
+              }
+              aggregatorError = $($_.Exception.Message)
+              timestamp = (Get-Date).ToString('o')
+            }
+            $fallbackSummary | ConvertTo-Json -Depth 10 | Set-Content -Path manifest-run-summary.json -Encoding UTF8 -Force
             if (-not (Test-Path 'manifest-run-diff.json')) { '{}' | Out-File -FilePath manifest-run-diff.json -Encoding utf8 }
           } finally {
             # Publish the exact filenames we want the uploader to send. Use GITHUB_OUTPUT for step outputs.
@@ -462,6 +482,21 @@ jobs:
         with:
           name: manifest-run-diff
           path: manifest-run-diff.json
+
+      - name: Verify summary file
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host '--- VERIFY SUMMARY FILE ---'
+          Write-Host "PWD=$(Get-Location)"
+          Write-Host 'Listing root:'
+          Get-ChildItem -Path . -Force | ForEach-Object { Write-Host $_.FullName }
+          if (Test-Path 'manifest-run-summary.json') {
+            Write-Host 'FOUND manifest-run-summary.json'
+            Get-Content 'manifest-run-summary.json' -Raw | Write-Host
+          } else {
+            Write-Host 'MISSING manifest-run-summary.json'
+          }
 
       # debug bundle moved below to capture ci-decision.json
 
