@@ -88,9 +88,9 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          # Run the discovery helper which writes a discovery JSON into .github/artifacts
-          & 'tools/ci/discover-manifests.ps1'
-          $discPath = '.github/artifacts/discovery-manifests.json'
+          # Run the discovery helper which writes a discovery JSON into a run-scoped folder under .github/artifacts
+          & 'tools/ci/discover-manifests.ps1' -OutDir '.github/artifacts' -RunId $env:GITHUB_RUN_ID
+          $discPath = ".github/artifacts/$($env:GITHUB_RUN_ID)/discovery-manifests.json"
           if (-not (Test-Path $discPath)) { Write-Host "Found manifests: []"; "manifests=[]" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append; exit 0 }
           $json = Get-Content -Raw -Path $discPath
           Write-Host "Found manifests: $json"

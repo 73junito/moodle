@@ -10,14 +10,25 @@ $ErrorActionPreference = 'Stop'
 
 Write-Host "[guard] Running discover-manifests.ps1 to validate discovery exclusions"
 
-# Ensure the discovery script runs and writes its artifact
-& "$PSScriptRoot/../discover-manifests.ps1"
-
+# Run discovery explicitly to a run-scoped folder (fall back to legacy location for older tooling)
 $repoRoot = (Get-Item $PSScriptRoot).FullName
 for ($i = 0; $i -lt 3; $i++) { $repoRoot = Split-Path -Parent $repoRoot }
-$discoveryFile = Join-Path $repoRoot '.github/artifacts/discovery-manifests.json'
-if (-not (Test-Path $discoveryFile)) {
-    Write-Error "Discovery output not found: $discoveryFile"
+$runId = $env:GITHUB_RUN_ID
+if (-not $runId) { $runId = 'local' }
+$outDir = Join-Path $repoRoot '.github/artifacts'
+
+& "$PSScriptRoot/../discover-manifests.ps1" -OutDir $outDir -RunId $runId
+
+# Prefer run-scoped discovery output, but allow legacy single-file path for compatibility
+$runScopedDir = Join-Path $outDir $runId
+$runScopedFile = Join-Path $runScopedDir 'discovery-manifests.json'
+$legacyFile = Join-Path $outDir 'discovery-manifests.json'
+$candidates = @($runScopedFile, $legacyFile)
+
+$discoveryFile = $null
+foreach ($c in $candidates) { if (Test-Path $c) { $discoveryFile = $c; break } }
+if (-not $discoveryFile) {
+    Write-Error "Discovery output not found (tried run-scoped and legacy locations): $($candidates -join ', ')"
     exit 1
 }
 

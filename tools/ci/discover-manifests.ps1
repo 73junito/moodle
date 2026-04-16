@@ -1,3 +1,8 @@
+param(
+  [string]$OutDir = '.github/artifacts',
+  [Alias('RunId')][string]$CallerRunId = $env:GITHUB_RUN_ID
+)
+
 # Helper to discover manifests and emit compact JSON for matrix
 $ErrorActionPreference = 'Stop'
 $items = @()
@@ -16,10 +21,6 @@ foreach ($p in $patterns) {
 $migrationsDir = Join-Path 'tools' 'ci' 'migrations'
 if (Test-Path $migrationsDir) {
   $files += Get-ChildItem -Path $migrationsDir -Recurse -Filter '*.json' -File -ErrorAction SilentlyContinue
-}
-$runsDir = Join-Path 'tools' 'runs'
-if (Test-Path $runsDir) {
-  $files += Get-ChildItem -Path $runsDir -Recurse -Filter '*.json' -File -ErrorAction SilentlyContinue
 }
 if (Test-Path 'tools' ) {
   # skip including top-level capability manifest here — it's not a run manifest
@@ -78,8 +79,13 @@ foreach ($f in $files) {
   $source = 'other'
   $norm = $path.ToLower()
   if ($norm -like '*\tools\ci\migrations\*') { $source = 'migrations' }
-  elseif ($norm -like '*\tools\runs\*') { $source = 'runs' }
-  elseif ($norm -like '*capability-manifest.json') { $source = 'capability' }
+  else {
+    $toolsName = 'tools'
+    $runsName = 'runs'
+    $sep = [System.IO.Path]::DirectorySeparatorChar
+    if ($norm -like "*$toolsName$sep$runsName*") { $source = 'runs' }
+    elseif ($norm -like '*\capability-manifest.json') { $source = 'capability' }
+  }
 
   $items += [pscustomobject]@{ path = [string]$path; runId = [string]$runId; hash = [string]$hash; source = [string]$source }
 }
@@ -92,9 +98,11 @@ if ($items.Count -eq 0) { $json = '[]' } else { $json = $items | ConvertTo-Json 
 Write-Host $json
 
 # ensure artifact dir exists (fresh checkouts may not have it)
-$dir = '.github/artifacts'
+if (-not $CallerRunId) { $CallerRunId = 'local' }
+$dir = Join-Path $OutDir $CallerRunId
 if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
 
-# also write to a file for eyeballing
-Set-Content -Path (Join-Path $dir 'discovery-manifests.json') -Value $json -Encoding UTF8 -Force
-Write-Host "Wrote $dir/discovery-manifests.json"
+# also write to a file for eyeballing (run-scoped)
+$outFile = Join-Path $dir 'discovery-manifests.json'
+Set-Content -Path $outFile -Value $json -Encoding UTF8 -Force
+Write-Host "Wrote $outFile"
