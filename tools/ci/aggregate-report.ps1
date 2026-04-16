@@ -199,29 +199,74 @@ if (-not (Test-Path $ArtifactsDir)) {
     }
 }
 
-# Deduplicate runs by (runId, manifestPath) to avoid double-counting
-$WriteHost = $null
-Write-Host "[aggregator] Deduplicating runs by runId+manifestPath"
-# use generic List[object] constructor to ensure ToArray() is available and types are consistent
-$uniqueList = [System.Collections.Generic.List[object]]::new()
-$seen = @{}
-foreach ($r in $runs) {
-    $rid = if ($r.runId) { $r.runId } else { 'unknown' }
-    $mp = if ($r.manifestPath) { $r.manifestPath } else { '' }
-    $key = "${rid}|${mp}"
-    if (-not $seen.ContainsKey($key)) {
-        $seen[$key] = $true
-        $uniqueList.Add($r) | Out-Null
-    } else {
-        Write-Host "[aggregator] Skipping duplicate run entry: $rid manifest=$mp"
+# Merge runs by `runId` into a single canonical record, preferring execution artifacts (run-*)
+Write-Host "[aggregator] Merging runs by runId with artifact precedence (run-* > pr-validation > others)"
+
+# helper: numeric priority for source (lower = higher priority)
+function SourcePriority($s) {
+    switch ($s) {
+        'run' { return 1 }
+        'pr-validation' { return 2 }
+        'pssa' { return 3 }
+        default { return 4 }
     }
 }
 
-# convert generic list to native array for downstream processing
-$runs = $uniqueList.ToArray()
+function Choose-Status($a, $b) {
+    $priority = @('failed','success','ok','skipped','unknown')
+    foreach ($p in $priority) {
+        if (($a -and ($a -eq $p)) -or ($b -and ($b -eq $p))) { return $p }
+    }
+    if ($a) { return $a }
+    return $b
+}
 
-# Ensure deterministic ordering by runId (push unknowns to the end)
-$runs = @($runs | Sort-Object -Property @{ Expression = { if ($_.runId) { $_.runId } else { 'zzz-unknown' } } })
+$runMap = @{}
+foreach ($r in $runs) {
+    $rid = Normalize-RunId $r.runId
+
+    # detect a more specific source when possible
+    if ($r.source -eq 'unknown') {
+        if ($r.artifacts.metadataPath -and ($r.artifacts.metadataPath -match '[/\\]run-')) { $r.source = 'run' }
+        elseif ($r.artifacts.metadataPath -and ($r.artifacts.metadataPath -match 'pr-validation-report')) { $r.source = 'pr-validation' }
+        elseif ($r.manifestPath -and ($r.manifestPath -match 'pssa-results')) { $r.source = 'pssa' }
+        elseif ($r.artifacts.metadataPath -and ($r.artifacts.metadataPath -match 'pssa-results')) { $r.source = 'pssa' }
+    }
+
+    if (-not $runMap.ContainsKey($rid)) {
+        $runMap[$rid] = $r
+        continue
+    }
+
+    $existing = $runMap[$rid]
+    $existingPr = SourcePriority $existing.source
+    $newPr = SourcePriority $r.source
+
+    if ($newPr -lt $existingPr) {
+        # new record has higher priority: make it the base and merge missing fields from existing
+        $base = $r
+        if (-not $base.artifacts.indexPath -and $existing.artifacts.indexPath) { $base.artifacts.indexPath = $existing.artifacts.indexPath }
+        if (-not $base.artifacts.metadataPath -and $existing.artifacts.metadataPath) { $base.artifacts.metadataPath = $existing.artifacts.metadataPath }
+        if (-not $base.artifacts.validationPath -and $existing.artifacts.validationPath) { $base.artifacts.validationPath = $existing.artifacts.validationPath }
+        $base.attemptCount = [math]::Max([int]$base.attemptCount, [int]$existing.attemptCount)
+        $base.attemptHistory = @(@($base.attemptHistory) + @($existing.attemptHistory)) | Select-Object -Unique
+        $base.status = Choose-Status $base.status $existing.status
+        $runMap[$rid] = $base
+        Write-Host "[aggregator] Merged runId=$rid: preferred source $($r.source) over $($existing.source)"
+    } else {
+        # existing has equal or higher priority: absorb missing fields from the new record
+        if (-not $existing.artifacts.indexPath -and $r.artifacts.indexPath) { $existing.artifacts.indexPath = $r.artifacts.indexPath }
+        if (-not $existing.artifacts.metadataPath -and $r.artifacts.metadataPath) { $existing.artifacts.metadataPath = $r.artifacts.metadataPath }
+        if (-not $existing.artifacts.validationPath -and $r.artifacts.validationPath) { $existing.artifacts.validationPath = $r.artifacts.validationPath }
+        $existing.attemptCount = [math]::Max([int]$existing.attemptCount, [int]$r.attemptCount)
+        $existing.attemptHistory = @(@($existing.attemptHistory) + @($r.attemptHistory)) | Select-Object -Unique
+        $existing.status = Choose-Status $existing.status $r.status
+        Write-Host "[aggregator] Merged runId=$rid: retained source $($existing.source) and absorbed $($r.source)"
+    }
+}
+
+# Flatten map to array and ensure deterministic ordering by runId
+$runs = @($runMap.Values) | Sort-Object -Property @{ Expression = { if ($_.runId) { $_.runId } else { 'zzz-unknown' } } }
 
 # Build a stable summary object (always an object, never an array)
 Write-Host "[aggregator] runs count = $($runs.Count)"
