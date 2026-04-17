@@ -25,14 +25,20 @@ jobs:
       - name: Checking out code
         uses: actions/checkout@v4
 
-      - name: Set up PowerShell
-        uses: actions/setup-pwsh@v2
-        with:
-          version: '7.x'
-
-      - name: Load CI mode
-        shell: pwsh
-        run: pwsh -NoProfile -File tools/ci/load-ci-mode.ps1
+      - name: Load CI mode (pwsh -> jq -> default)
+        shell: bash
+        run: |
+          if command -v pwsh >/dev/null 2>&1; then
+            pwsh -NoProfile -File tools/ci/load-ci-mode.ps1
+          elif command -v jq >/dev/null 2>&1; then
+            jq -r '.presets[.currentPreset] | to_entries[] | "\(.key)=\(.value)"' tools/ci/ci-mode.json >> $GITHUB_ENV
+            echo "Loaded CI mode preset via jq"
+          else
+            echo "DIFF_MODE=dev" >> $GITHUB_ENV
+            echo "PSSA_MODE=dev" >> $GITHUB_ENV
+            echo "MANIFEST_VALIDATION_MODE=dev" >> $GITHUB_ENV
+            echo "No pwsh or jq; defaulting to dev" >&2
+          fi
 
       - name: Configuring node & npm
         uses: actions/setup-node@v4
@@ -117,14 +123,20 @@ jobs:
       - name: Checking out code from ${{ env.GITHUB_REF_SLUG }}
         uses: actions/checkout@v4
 
-      - name: Set up PowerShell
-        uses: actions/setup-pwsh@v2
-        with:
-          version: '7.x'
-
-      - name: Load CI mode
-        shell: pwsh
-        run: pwsh -NoProfile -File tools/ci/load-ci-mode.ps1
+      - name: Load CI mode (pwsh -> jq -> default)
+        shell: bash
+        run: |
+          if command -v pwsh >/dev/null 2>&1; then
+            pwsh -NoProfile -File tools/ci/load-ci-mode.ps1
+          elif command -v jq >/dev/null 2>&1; then
+            jq -r '.presets[.currentPreset] | to_entries[] | "\(.key)=\(.value)"' tools/ci/ci-mode.json >> $GITHUB_ENV
+            echo "Loaded CI mode preset via jq"
+          else
+            echo "DIFF_MODE=dev" >> $GITHUB_ENV
+            echo "PSSA_MODE=dev" >> $GITHUB_ENV
+            echo "MANIFEST_VALIDATION_MODE=dev" >> $GITHUB_ENV
+            echo "No pwsh or jq; defaulting to dev" >&2
+          fi
 
       - name: Setting up PHPUnit
         env:
