@@ -33,6 +33,13 @@ jobs:
         shell: pwsh
         run: pwsh -NoProfile -File tools/ci/ci_validate_no_implicit_paths.ps1 -Root .
 
+      - name: Validate no checked-in run outputs
+        shell: pwsh
+        run: pwsh -NoProfile -File tools/ci/ci_validate_no_run_outputs.ps1 -Root .
+
+      - name: Validate run schema
+        shell: pwsh
+        run: pwsh -NoProfile -File tools/ci/ci_validate_run_schema.ps1 -Root .
       - name: Setup Ollama (verified download)
         shell: pwsh
         run: pwsh -NoProfile -File tools/ci/ci_ollama_writable.ps1 -RunInstaller:$false
