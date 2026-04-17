@@ -16,7 +16,6 @@ on:
 
 env:
   php: 8.4
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   Grunt:
@@ -32,11 +31,9 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Installing node stuff
-        if: ${{ hashFiles('**/package.json') != '' }}
-        run: npm ci
+        run: npm install
 
       - name: Running grunt
-        if: ${{ hashFiles('**/package.json') != '' }}
         run: npx grunt
 
       - name: Looking for uncommitted changes
@@ -82,9 +79,6 @@ jobs:
             db: pgsql
 
     steps:
-      - name: Checking out code
-        uses: actions/checkout@v4
-
       - name: Run MySQL Server
         if: ${{ matrix.db == 'mysqli' }}
         run: |
@@ -111,9 +105,8 @@ jobs:
           ini-values: max_input_vars=5000
           coverage: none
 
-      # Note: initial checkout moved earlier to ensure actions that need the
-      # repository (git-based actions, PHP unit setup) have a working tree.
-      # Remove this duplicate checkout unless a second checkout is required.
+      - name: Checking out code from ${{ env.GITHUB_REF_SLUG }}
+        uses: actions/checkout@v4
 
       - name: Setting up PHPUnit
         env:
@@ -123,7 +116,7 @@ jobs:
           cp .github/workflows/config-template.php config.php
           mkdir ../moodledata
           sudo locale-gen en_AU.UTF-8
-          php admin/tool/phpunit/cli/init.php --no-composer-self-update
+          php public/admin/tool/phpunit/cli/init.php --no-composer-self-update
 
       - name: Running PHPUnit tests
         env:
