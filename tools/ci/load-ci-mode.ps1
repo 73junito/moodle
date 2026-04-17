@@ -4,8 +4,8 @@ param()
 try {
   $jsonPath = Join-Path -Path (Get-Location) -ChildPath 'tools/ci/ci-mode.json'
   if (-not (Test-Path $jsonPath)) {
-    Write-Host "ci-mode.json not found at $jsonPath. Using defaults (dev)."
-    $preset = @{ DIFF_MODE='dev'; PSSA_MODE='dev'; MANIFEST_VALIDATION_MODE='dev' }
+    Write-Host "ci-mode.json not found at $jsonPath. Using default CI modes."
+    $preset = @{ DIFF_MODE='report'; PSSA_MODE='baseline'; MANIFEST_VALIDATION_MODE='baseline' }
   } else {
     $cfg = Get-Content -Raw -Path $jsonPath | ConvertFrom-Json
     $presetName = if ($null -ne $cfg.currentPreset) { $cfg.currentPreset } else { 'dev' }
