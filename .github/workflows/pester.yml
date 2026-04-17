@@ -37,23 +37,7 @@ jobs:
           # Run Pester once and persist results
           $result = Invoke-Pester -Path $testPath -Passthru -Output Detailed
 
-          # Create a JSON-safe export to avoid ConvertTo-Json duplicate-key errors
-          $failed = @()
-          try {
-            $failed = $result.Tests | Where-Object { $_.Result -eq 'Failed' } | ForEach-Object { $_.Name }
-          } catch { }
-
-          $export = [ordered]@{
-            FailedCount  = $result.FailedCount
-            PassedCount  = $result.PassedCount
-            SkippedCount = $result.SkippedCount
-            TotalCount   = $result.TotalCount
-            Duration     = $result.Duration.ToString()
-            Summary      = $result.Summary
-            FailedTests  = $failed
-          }
-
-          $export | ConvertTo-Json -Depth 5 | Out-File pester-results.json -Encoding utf8
+          $result | ConvertTo-Json -Depth 10 | Out-File pester-results.json -Encoding utf8
 
           Write-Host "Pester Summary: $($result.Summary)"
 
