@@ -1,0 +1,20 @@
+{
+  "presets": {
+    "dev": {
+      "DIFF_MODE": "dev",
+      "PSSA_MODE": "dev",
+      "MANIFEST_VALIDATION_MODE": "dev"
+    },
+    "report": {
+      "DIFF_MODE": "report",
+      "PSSA_MODE": "report",
+      "MANIFEST_VALIDATION_MODE": "report"
+    },
+    "gate": {
+      "DIFF_MODE": "gate",
+      "PSSA_MODE": "gate",
+      "MANIFEST_VALIDATION_MODE": "gate"
+    }
+  },
+  "currentPreset": "report"
+}
