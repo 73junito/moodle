@@ -35,7 +35,7 @@ jobs:
 
       - name: Validate no checked-in run outputs
         shell: pwsh
-        run: pwsh -NoProfile -File tools/ci/ci_validate_no_run_outputs.ps1 -Root .
+        run: pwsh -NoProfile -File tools/ci/ci_validate_no_run_outputs.ps1
 
       - name: Validate run schema
         shell: pwsh
