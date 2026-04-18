@@ -144,9 +144,9 @@ jobs:
             jq -r '.presets[.currentPreset] | to_entries[] | "\(.key)=\(.value)"' tools/ci/ci-mode.json >> $GITHUB_ENV
             echo "Loaded CI mode preset via jq"
           else
-            echo "DIFF_MODE=dev" >> $GITHUB_ENV
-            echo "PSSA_MODE=dev" >> $GITHUB_ENV
-            echo "MANIFEST_VALIDATION_MODE=dev" >> $GITHUB_ENV
+            echo "DIFF_MODE=report" >> $GITHUB_ENV
+            echo "PSSA_MODE=baseline" >> $GITHUB_ENV
+            echo "MANIFEST_VALIDATION_MODE=baseline" >> $GITHUB_ENV
             echo "No pwsh or jq; defaulting to dev" >&2
           fi
 
