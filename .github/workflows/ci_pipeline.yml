@@ -39,7 +39,7 @@ jobs:
 
       - name: Validate run schema
         shell: pwsh
-        run: pwsh -NoProfile -File tools/ci/ci_validate_run_schema.ps1 -Root .
+        run: pwsh -NoProfile -File tools/ci/ci_validate_run_schema.ps1
       - name: Setup Ollama (verified download)
         shell: pwsh
         run: pwsh -NoProfile -File tools/ci/ci_ollama_writable.ps1 -RunInstaller:$false
