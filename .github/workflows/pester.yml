@@ -37,10 +37,26 @@ jobs:
           # Run Pester once and persist results
           $result = Invoke-Pester -Path $testPath -Passthru -Output Detailed
 
-          $result | ConvertTo-Json -Depth 10 | Out-File pester-results.json -Encoding utf8
+          $failedTestNames = @()
+          if ($null -ne $result.Tests) {
+            $failedTestNames = @($result.Tests | Where-Object { $_.Result -eq 'Failed' } | ForEach-Object { $_.Name })
+          }
 
-          Write-Host "Pester Summary: $($result.Summary)"
+          $resultSummary = [pscustomobject]@{
+            Result             = $result.Result
+            TotalCount         = $result.TotalCount
+            PassedCount        = $result.PassedCount
+            FailedCount        = $result.FailedCount
+            SkippedCount       = $result.SkippedCount
+            InconclusiveCount  = $result.InconclusiveCount
+            NotRunCount        = $result.NotRunCount
+            DurationSeconds    = if ($null -ne $result.Duration) { $result.Duration.TotalSeconds } else { $null }
+            FailedTestNames    = $failedTestNames
+          }
 
+          $resultSummary | ConvertTo-Json -Depth 5 | Out-File pester-results.json -Encoding utf8
+
+          Write-Host "Pester Summary: $($result.Result) - Total=$($result.TotalCount) Passed=$($result.PassedCount) Failed=$($result.FailedCount) Skipped=$($result.SkippedCount)"
           if ($result.FailedCount -gt 0) {
             Write-Host "FAILED: $($result.FailedCount) tests"
             exit 1
