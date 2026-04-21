@@ -5,6 +5,12 @@ This directory contains a small configuration and helper to control CI enforceme
 Files
 - `ci-mode.json` — declarative presets and the currently selected preset (`currentPreset`).
 - `load-ci-mode.ps1` — PowerShell helper that reads `ci-mode.json` and writes selected preset keys to `GITHUB_ENV` so workflows can consume them as environment variables.
+- `../../ci-mode.json` (repo root) — generated/resolved CI mode written by `tools/ci/Resolve-CIMode.ps1` and read by helpers like `tools/ci/Get-CIMode.ps1`.
+
+Important distinction
+- `tools/ci/ci-mode.json` is the editable **preset source** (shape: `currentPreset` + `presets` map with env vars).
+- `ci-mode.json` at repo root is the runtime **resolved output** (shape: `DiffMode` / `PSSAMode` / `ValidationMode` / `Label` / `Grade`).
+- Edit `tools/ci/ci-mode.json` in PRs when changing rollout behavior; do not hand-edit root `ci-mode.json` unless you are intentionally updating generated output for a workflow/script contract.
 
 Presets
 - `dev` — signals enabled but purely informational; no enforcement.
