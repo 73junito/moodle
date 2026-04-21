@@ -1,5 +1,7 @@
 param()
 
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 # Load ci-mode.json and export selected preset values to GITHUB_ENV
 try {
   $jsonPath = Join-Path -Path (Get-Location) -ChildPath 'tools/ci/ci-mode.json'
