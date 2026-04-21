@@ -25,5 +25,6 @@ try {
   }
   Write-Host "Loaded CI mode preset: $presetName"
 } catch {
-  Write-Host "Failed to load ci-mode.json: $_"
+  Write-Host "::error::Failed to load ci-mode.json: $($_.Exception.Message)"
+  exit 1
 }
