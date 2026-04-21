@@ -55,7 +55,7 @@ jobs:
             -RunId "${{ github.run_id }}-${{ github.sha }}"
 
       - name: Upload resilient/strict reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ir-validation-reports
           path: |
@@ -63,13 +63,13 @@ jobs:
             tools/runs/*/strict/ir_validation_report.json
 
       - name: Upload compare artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ir-validation-compare
           path: tools/runs/*/ir_validation_compare.json
 
       - name: Upload run metadata
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ir-validation-metadata
           path: tools/runs/*/metadata.json
