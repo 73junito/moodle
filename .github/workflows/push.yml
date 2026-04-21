@@ -36,7 +36,7 @@ jobs:
           if command -v pwsh >/dev/null 2>&1; then
             pwsh -NoProfile -File tools/ci/load-ci-mode.ps1
           elif command -v jq >/dev/null 2>&1; then
-            jq -r '.presets[.currentPreset] | to_entries[] | "\(.key)=\(.value)"' tools/ci/ci-mode.json >> $GITHUB_ENV
+            jq -r '(.currentPreset // "dev") as $preset | (.presets[$preset] // .presets.dev // {}) | to_entries[] | "\(.key)=\(.value)"' tools/ci/ci-mode.json >> $GITHUB_ENV
             echo "Loaded CI mode preset via jq"
           else
             echo "DIFF_MODE=report" >> $GITHUB_ENV
