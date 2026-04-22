@@ -16,7 +16,31 @@ $latestdir = __DIR__ . '/runs/latest';
 if (!file_exists($latestdir)) { @mkdir($latestdir, 0777, true); }
 
 // Use shared registry and helper
-require_once(__DIR__ . '/stage_registry.php');
+function load_stage_registry() {
+    $candidates = [
+        __DIR__ . '/stage_registry.php',
+        dirname(__DIR__) . '/stage_registry.php',
+    ];
+
+    foreach ($candidates as $registryFile) {
+        if (!file_exists($registryFile)) {
+            continue;
+        }
+
+        require_once($registryFile);
+        if (function_exists('get_stage_registry')) {
+            return;
+        }
+
+        throw new Exception("Stage registry file '$registryFile' does not define get_stage_registry()");
+    }
+
+    throw new Exception(
+        "Stage registry file not found. Checked: " . implode(', ', $candidates)
+    );
+}
+
+load_stage_registry();
 // Compiler should not bind logs to a real runs dir; pass null so log entries are basenames
 $stageRegistry = get_stage_registry(null);
 
