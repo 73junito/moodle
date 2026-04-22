@@ -290,9 +290,13 @@ try {
         if (!array_key_exists('timeout_sec', $nd)) { fwrite(STDERR, "Compiled node '$n' missing 'timeout_sec'\n"); exit(2); }
         if (!array_key_exists('retries', $nd)) { fwrite(STDERR, "Compiled node '$n' missing 'retries'\n"); exit(2); }
         $logname = isset($nd['log']) && $nd['log'] ? basename($nd['log']) : ($n . '.log');
+        $timeoutSec = $nd['timeout_sec'];
+        if ($timeoutSec !== null && (is_int($timeoutSec) || ctype_digit((string)$timeoutSec))) {
+            $timeoutSec = (int)$timeoutSec;
+        }
         $newStages[$n] = [
             'cmd' => $nd['cmd'],
-            'timeout_sec' => ($nd['timeout_sec'] === null) ? null : (int)$nd['timeout_sec'],
+            'timeout_sec' => $timeoutSec,
             'retries' => (int)$nd['retries'],
             'required' => !empty($nd['required']),
             'log' => $runsdir . '/' . $logname,
