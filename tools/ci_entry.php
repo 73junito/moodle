@@ -250,9 +250,9 @@ try {
             fwrite(STDERR, $compilerOut);
             exit($rc);
         }
-        // Fail CI if compiler emitted any warnings (case-insensitive match)
-        if (stripos($compilerOut, 'warning') !== false) {
-            fwrite(STDERR, "pipeline compiler emitted warnings; failing CI\n");
+        // Match compile_wrapper behavior: fail on explicit PHP diagnostics only.
+        if (preg_match('/\bWarning\b/i', $compilerOut) || preg_match('/\bDeprecated\b/i', $compilerOut) || preg_match('/\bNotice\b/i', $compilerOut)) {
+            fwrite(STDERR, "Compiler emitted warnings/notices/deprecations; failing CI\n");
             fwrite(STDERR, $compilerOut);
             exit(3);
         }
