@@ -175,8 +175,18 @@ function build_compiled_pipeline(array $resolved, array $pipelineStages, array $
 }
 
 // Load pipeline.json
-$pipelinePath = __DIR__ . '/config/pipeline.json';
-if (!file_exists($pipelinePath)) { fwrite(STDERR, "pipeline.json not found at $pipelinePath\n"); exit(2); }
+$pipelineCandidates = [
+    __DIR__ . '/config/pipeline.json',
+    dirname(__DIR__) . '/config/pipeline.json',
+];
+$pipelinePath = null;
+foreach ($pipelineCandidates as $candidate) {
+    if (file_exists($candidate)) {
+        $pipelinePath = $candidate;
+        break;
+    }
+}
+if ($pipelinePath === null) { fwrite(STDERR, "pipeline.json not found in expected locations: " . implode(', ', $pipelineCandidates) . "\n"); exit(2); }
 $raw = file_get_contents($pipelinePath);
 $dec = json_decode($raw, true);
 if (json_last_error() !== JSON_ERROR_NONE || !is_array($dec)) { fwrite(STDERR, "Invalid JSON in pipeline file: $pipelinePath\n"); exit(2); }
