@@ -1,6 +1,6 @@
 <?php
 // Wrapper to run the pipeline compiler, capture output, and fail on warnings.
-$cmd = PHP_BINARY . ' ' . escapeshellarg(__DIR__ . '/pipeline_compiler.php') . ' --mode=compile-only';
+$cmd = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/pipeline_compiler.php') . ' --mode=compile-only';
 $runsdir = __DIR__ . '/runs';
 if (!file_exists($runsdir)) { @mkdir($runsdir, 0777, true); }
 $outPath = $runsdir . '/compile_wrapper.out';
