@@ -9,6 +9,7 @@ on:
         default: ''
 env:
   php: 8.4
+  MOODLE_ROOT: public
 
 jobs:
   Grunt:
@@ -152,7 +153,13 @@ jobs:
           echo "pathtophp=$(which php)" >> $GITHUB_ENV # Inject installed pathtophp to env. The template config needs it.
           cp .github/workflows/config-template.php config.php
           mkdir ../moodledata
-          php admin/tool/phpunit/cli/init.php --no-composer-self-update
+          if [ ! -d "$MOODLE_ROOT/admin" ]; then
+            mkdir -p "$MOODLE_ROOT"
+            git clone --depth 1 https://github.com/moodle/moodle.git "$MOODLE_ROOT"
+          else
+            echo "$MOODLE_ROOT/admin exists, skipping clone"
+          fi
+          php "$MOODLE_ROOT/admin/tool/phpunit/cli/init.php" --no-composer-self-update
 
       - name: Running PHPUnit tests
         env:
