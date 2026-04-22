@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "stages": {
+    "bootstrap": {},
+    "validate": { "needs": ["bootstrap"] },
+    "cron": { "needs": ["validate"] },
+    "smoke": { "needs": ["validate"] },
+    "validate_artifacts": { "needs": ["smoke"] }
+  }
+}
