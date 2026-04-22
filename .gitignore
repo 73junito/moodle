@@ -48,3 +48,19 @@ Thumbs.db
 # ---- Safety for large dirs ----
 */node_modules/
 */vendor/
+
+# Ignore ephemeral CI/run artifacts
+/tools/runs/
+/tools/runs/latest/
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Common vendor / node directories
+/vendor/
+/node_modules/
+
+# Composer / npm lock files sometimes generated in CI
+composer.lock
+package-lock.json
