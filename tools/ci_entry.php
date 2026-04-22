@@ -292,7 +292,7 @@ try {
         $logname = isset($nd['log']) && $nd['log'] ? basename($nd['log']) : ($n . '.log');
         $newStages[$n] = [
             'cmd' => $nd['cmd'],
-            'timeout_sec' => (int)$nd['timeout_sec'],
+            'timeout_sec' => ($nd['timeout_sec'] === null) ? null : (int)$nd['timeout_sec'],
             'retries' => (int)$nd['retries'],
             'required' => !empty($nd['required']),
             'log' => $runsdir . '/' . $logname,
