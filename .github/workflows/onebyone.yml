@@ -29,6 +29,7 @@ on:
 env:
   chunks: 7
   MOODLE_ROOT: public
+  MOODLE_REPO: https://github.com/moodle/moodle.git
 
 jobs:
   collect:
@@ -116,10 +117,12 @@ jobs:
           sudo locale-gen en_AU.UTF-8
           if [ ! -d "$MOODLE_ROOT/admin" ]; then
             mkdir -p "$MOODLE_ROOT"
-            git clone --depth 1 https://github.com/moodle/moodle.git "$MOODLE_ROOT"
+            git clone --depth 1 "$MOODLE_REPO" "$MOODLE_ROOT"
           else
             echo "$MOODLE_ROOT/admin exists, skipping clone"
           fi
+          echo "Moodle repo origin:" && git -C "$MOODLE_ROOT" remote -v || true
+          echo "Listing expected phpunit path:" && ls -la "$MOODLE_ROOT/admin/tool/phpunit/cli" || (echo "MISSING: $MOODLE_ROOT/admin/tool/phpunit/cli"; ls -la "$MOODLE_ROOT" | sed -n '1,200p'; exit 1)
           php "$MOODLE_ROOT/admin/tool/phpunit/cli/init.php" --no-composer-self-update
 
       - name: Run PHPUnit test (one by one)
