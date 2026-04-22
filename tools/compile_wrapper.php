@@ -12,7 +12,7 @@ if ($rc !== 0) { exit($rc); }
 // Treat explicit PHP runtime messages as CI-worthy issues. Use word-boundary regex
 // to avoid accidental matches inside normal text.
 if (preg_match('/\bWarning\b/i', $out) || preg_match('/\bDeprecated\b/i', $out) || preg_match('/\bNotice\b/i', $out)) {
-	fwrite(STDERR, "Compiler emitted warnings/notices/deprecations; failing CI\n");
-	exit(3);
+    fwrite(STDERR, "Compiler emitted warnings/notices/deprecations; failing CI\n");
+    exit(3);
 }
 exit(0);
