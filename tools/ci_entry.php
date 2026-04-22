@@ -20,7 +20,19 @@ if (!file_exists($runsdir)) { mkdir($runsdir, 0777, true); }
 $latestdir = __DIR__ . '/runs/latest';
 if (!file_exists($latestdir)) { @mkdir($latestdir, 0777, true); }
 
-require_once(__DIR__ . '/executor_lib.php');
+$executorlib = __DIR__ . '/executor_lib.php';
+if (is_readable($executorlib)) {
+    require_once($executorlib);
+}
+if (!function_exists('php_cmd')) {
+    function php_cmd($script = null) {
+        $php = defined('PHP_BINARY') && PHP_BINARY ? PHP_BINARY : 'php';
+        if ($script === null || $script === '') {
+            return $php;
+        }
+        return $php . ' ' . escapeshellarg($script);
+    }
+}
 
 // Shared helpers and stage registry
 // Minimal executor: the compiler is authoritative for runtime stage defs.
